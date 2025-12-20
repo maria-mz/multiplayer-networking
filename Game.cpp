@@ -128,22 +128,11 @@ void Game::spawnPlayers()
     m_player->m_transform.scale = 2;
     m_opponent->m_transform.scale = 2;
 
-    if (m_isHost)
-    {
-        m_player->m_position.x = PLAYER_1_SPAWN_POSITION.x;
-        m_player->m_position.y = PLAYER_1_SPAWN_POSITION.y;
+    m_player->m_position.x = INITIAL_SPAWN_POSITION.x;
+    m_player->m_position.y = INITIAL_SPAWN_POSITION.y;
 
-        m_opponent->m_position.x = PLAYER_2_SPAWN_POSITION.x;
-        m_opponent->m_position.y = PLAYER_2_SPAWN_POSITION.y;
-    }
-    else
-    {
-        m_player->m_position.x = PLAYER_2_SPAWN_POSITION.x;
-        m_player->m_position.y = PLAYER_2_SPAWN_POSITION.y;
-
-        m_opponent->m_position.x = PLAYER_1_SPAWN_POSITION.x;
-        m_opponent->m_position.y = PLAYER_1_SPAWN_POSITION.y;
-    }
+    m_opponent->m_position.x = INITIAL_SPAWN_POSITION.x;
+    m_opponent->m_position.y = INITIAL_SPAWN_POSITION.y;
 
     // Set initial net opponent data
     m_opponentNetcode.setNetPlayerData({
