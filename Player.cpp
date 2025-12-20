@@ -102,7 +102,7 @@ void PlayerStateRun::input(Player &player, InputEvent inputEvent)
             )
             {
                 player.changeState(PlayerState::Idle);
-                player.updateDirection(Direction::Left);
+                player.m_direction = Direction::Left;
             }
 
             break;
@@ -116,7 +116,7 @@ void PlayerStateRun::input(Player &player, InputEvent inputEvent)
             )
             {
                 player.changeState(PlayerState::Idle);
-                player.updateDirection(Direction::Right);
+                player.m_direction = Direction::Right;
             }
 
             break;
@@ -132,11 +132,11 @@ void PlayerStateRun::update(Player &player, int deltaTime)
 
     if (player.m_velocity.x > 0)
     {
-        player.updateDirection(Direction::Right);
+        player.m_direction = Direction::Right;
     }
     else
     {
-        player.updateDirection(Direction::Left);
+        player.m_direction = Direction::Left;
     }
 }
 
@@ -159,23 +159,6 @@ Player::~Player()
     delete m_stateObject;
 }
 
-void Player::setPosition(float x, float y)
-{
-    m_position.x = x;
-    m_position.y = y;
-}
-
-void Player::setVelocity(float x, float y)
-{
-    m_velocity.x = x;
-    m_velocity.y = y;
-}
-
-void Player::setScale(int scale)
-{
-    m_transform.scale = scale;
-}
-
 void Player::input(InputEvent inputEvent)
 {
     m_inputManager.input(inputEvent);
@@ -190,7 +173,8 @@ void Player::update(int deltaTime)
 
 void Player::render(SDL_Renderer *renderer) const
 {
-    renderPlayer(renderer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); // Blue
+    renderBox(renderer, getBoundingBox());
 }
 
 void Player::renderBox(SDL_Renderer *renderer, SDL_Rect box) const
@@ -201,12 +185,6 @@ void Player::renderBox(SDL_Renderer *renderer, SDL_Rect box) const
     {
         SDL_RenderDrawRect(renderer, &box);
     }
-}
-
-void Player::renderPlayer(SDL_Renderer *renderer) const
-{
-    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); // Blue
-    renderBox(renderer, getBoundingBox());
 }
 
 SDL_Rect Player::getBoundingBox() const
@@ -238,11 +216,6 @@ void Player::changeState(PlayerState state)
     m_stateObject->enter(*this);
 }
 
-void Player::updateDirection(Direction direction)
-{
-    m_direction = direction;
-}
-
 void Player::boundPosition()
 {
     SDL_Rect boundingBox = getBoundingBox();
@@ -262,7 +235,3 @@ PlayerState Player::getState() const
     return m_currentState;
 }
 
-Direction Player::getDirection() const
-{
-    return m_direction;
-}

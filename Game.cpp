@@ -127,18 +127,24 @@ bool Game::init()
 
 void Game::spawnPlayers()
 {
-    m_player->setScale(2);
-    m_opponent->setScale(2);
+    m_player->m_transform.scale = 2;
+    m_opponent->m_transform.scale = 2;
 
     if (m_isHost)
     {
-        m_player->setPosition(PLAYER_1_SPAWN_POSITION.x, PLAYER_1_SPAWN_POSITION.y);
-        m_opponent->setPosition(PLAYER_2_SPAWN_POSITION.x, PLAYER_2_SPAWN_POSITION.y);
+        m_player->m_position.x = PLAYER_1_SPAWN_POSITION.x;
+        m_player->m_position.y = PLAYER_1_SPAWN_POSITION.y;
+
+        m_opponent->m_position.x = PLAYER_2_SPAWN_POSITION.x;
+        m_opponent->m_position.y = PLAYER_2_SPAWN_POSITION.y;
     }
     else
     {
-        m_player->setPosition(PLAYER_2_SPAWN_POSITION.x, PLAYER_2_SPAWN_POSITION.y);
-        m_opponent->setPosition(PLAYER_1_SPAWN_POSITION.x, PLAYER_1_SPAWN_POSITION.y);
+        m_player->m_position.x = PLAYER_2_SPAWN_POSITION.x;
+        m_player->m_position.y = PLAYER_2_SPAWN_POSITION.y;
+
+        m_opponent->m_position.x = PLAYER_1_SPAWN_POSITION.x;
+        m_opponent->m_position.y = PLAYER_1_SPAWN_POSITION.y;
     }
 
     // Set initial net opponent data
@@ -209,9 +215,9 @@ void Game::updateOpponent(int deltaTime)
             m_opponent->input(movementUpdate.inputEvent);
         }
 
-        if (movementUpdate.direction != m_opponent->getDirection())
+        if (movementUpdate.direction != m_opponent->m_direction)
         {
-            m_opponent->updateDirection(movementUpdate.direction);
+            m_opponent->m_direction = movementUpdate.direction;
         }
 
         m_opponentNetcode.updateNetState(movementUpdate);
@@ -244,7 +250,7 @@ void Game::update(const int deltaTime)
     playerMovementUpdate.velX = m_player->m_velocity.x;
     playerMovementUpdate.velY = m_player->m_velocity.y;
     playerMovementUpdate.inputEvent = m_playerInputEvent;
-    playerMovementUpdate.direction = m_player->getDirection();
+    playerMovementUpdate.direction = m_player->m_direction;
 
     sendPlayerMovementUpdate(playerMovementUpdate);
 }

@@ -68,7 +68,7 @@ struct Transform
 enum class Direction
 {
     Left,
-    Right
+    Right,
 };
 
 class Player
@@ -80,27 +80,15 @@ class Player
         Player();
         ~Player();
 
-        void setPosition(float x, float y);
-        void setVelocity(float x, float y);
-        void setScale(int scale);
-
         void input(InputEvent inputEvent);
         void update(int deltaTime);
         void render(SDL_Renderer *renderer) const;
 
         PlayerState getState() const;
-        Direction getDirection() const;
+        void changeState(PlayerState state);
 
         void updateDirection(Direction direction);
-
-    // private:
-        void changeState(PlayerState state);
         void boundPosition();
-
-        SDL_Rect getBoundingBox() const;
-
-        void renderBox(SDL_Renderer *renderer, SDL_Rect box) const;
-        void renderPlayer(SDL_Renderer *renderer) const;
 
         Vector2D<float> m_position;
         Vector2D<float> m_velocity;
@@ -108,6 +96,11 @@ class Player
         Direction m_direction;
 
         InputManager m_inputManager;
+
+    private:
+        SDL_Rect getBoundingBox() const;
+
+        void renderBox(SDL_Renderer *renderer, SDL_Rect box) const;
 
         PlayerState m_currentState;
         PlayerStateInterface *m_stateObject;

@@ -36,7 +36,8 @@ void Netcode::syncPlayerWithNetState(Player &player)
     float dvx = player.m_velocity.x - m_netPlayerData.velocity.x;
     float dvy = player.m_velocity.y - m_netPlayerData.velocity.y;
 
-    player.setVelocity(m_netPlayerData.velocity.x, m_netPlayerData.velocity.y);
+    player.m_velocity.x = m_netPlayerData.velocity.x;
+    player.m_velocity.y = m_netPlayerData.velocity.y;
 
     const float lerpFactor = 0.3f;
 
