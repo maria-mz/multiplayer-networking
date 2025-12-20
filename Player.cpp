@@ -147,7 +147,8 @@ void PlayerStateRun::exit(Player &player)
 
 Player::Player()
     : m_stateObject(new PlayerStateIdle()),
-      m_transform{32, 32, 1}
+      m_transform{32, 32, 1},
+      m_position{0, 0}
 {
     m_stateObject->enter(*this);
 }

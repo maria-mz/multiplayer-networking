@@ -18,6 +18,8 @@ constexpr int SERVER_PORT = 53791;
 enum class GameMessageType : uint8_t
 {
     Unknown = 0,
+    JoinGame,
+    JoinGameAck,
     MovementUpdate,
 };
 
@@ -29,11 +31,17 @@ struct MovementUpdate
     float velY;
     InputEvent inputEvent;
     Direction direction;
+    int playerID;
 };
 
-struct HitRegistered
+struct JoinGame
 {
-    int hitPlayerID;
+
+};
+
+struct JoinGameAck
+{
+    int playerID;
 };
 
 struct GameMessage
@@ -41,7 +49,8 @@ struct GameMessage
     GameMessageType type;
     union {
         MovementUpdate movementUpdate;
-        HitRegistered hitRegistered;
+        JoinGame joinGame;
+        JoinGameAck joinGameAck;
     } data;
 };
 

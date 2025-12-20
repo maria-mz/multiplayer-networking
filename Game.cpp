@@ -1,12 +1,13 @@
 #include "Game.h"
+#include <cassert>
 
-Game::Game()
+RenderSystem::RenderSystem()
 {
     m_window = nullptr;
     m_renderer = nullptr;
 }
 
-Game::~Game()
+RenderSystem::~RenderSystem()
 {
     // Destroy window
     SDL_DestroyRenderer(m_renderer);
@@ -16,11 +17,9 @@ Game::~Game()
 
     // Quit SDL subsystems
     SDL_Quit();
-
-    m_network->shutdown();
 }
 
-bool Game::initWindow()
+bool RenderSystem::initWindow()
 {
     bool success = true;
 
@@ -54,7 +53,7 @@ bool Game::initWindow()
     return success;
 }
 
-bool Game::initRenderer()
+bool RenderSystem::initRenderer()
 {
     bool success = true;
 
@@ -81,7 +80,7 @@ bool Game::initRenderer()
     return success;
 }
 
-bool Game::initTextures()
+bool RenderSystem::initFonts()
 {
     bool success = true;
 
@@ -97,7 +96,7 @@ bool Game::initTextures()
     return success;
 }
 
-bool Game::init()
+bool RenderSystem::init()
 {
     bool success = false;
 
@@ -105,40 +104,43 @@ bool Game::init()
     {
         if (initRenderer())
         {
-            if (initTextures())
+            if (initFonts())
             {
                 success = true;
             }
         }
     }
 
-    if (success)
-    {
-        m_player = std::unique_ptr<Player>(new Player());
-        m_opponent = std::unique_ptr<Player>(new Player());
-
-        m_network = std::shared_ptr<NetworkManager>(new NetworkManager());
-    }
-
     return success;
 }
 
-void Game::spawnPlayers()
+void RenderSystem::renderGame(Game& game)
 {
-    m_player->m_transform.scale = 2;
-    m_opponent->m_transform.scale = 2;
+    assert(m_renderer != nullptr);
 
-    m_player->m_position.x = INITIAL_SPAWN_POSITION.x;
-    m_player->m_position.y = INITIAL_SPAWN_POSITION.y;
+    SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
+    SDL_RenderClear(m_renderer);
 
-    m_opponent->m_position.x = INITIAL_SPAWN_POSITION.x;
-    m_opponent->m_position.y = INITIAL_SPAWN_POSITION.y;
+    renderPlayer(*game.m_thisPlayer);
 
-    // Set initial net opponent data
-    m_opponentNetcode.setNetPlayerData({
-        {m_opponent->m_position.x, m_opponent->m_position.y},
-        {m_opponent->m_velocity.x, m_opponent->m_velocity.y}
-    });
+    SDL_RenderPresent(m_renderer);
+}
+
+void RenderSystem::renderPlayer(Player& player)
+{
+    assert(m_renderer != nullptr);
+    player.render(m_renderer);
+}
+
+
+Game::Game()
+{
+
+}
+
+Game::~Game()
+{
+    m_network->shutdown();
 }
 
 void Game::handleOpponentNetMsgs()
@@ -147,14 +149,14 @@ void Game::handleOpponentNetMsgs()
 
     while (m_network->receiveOpponentMsg(opponentMsg))
     {
-        switch (opponentMsg.type)
-        {
-            case GameMessageType::MovementUpdate:
-            {
-                m_opponentMovementUpdatesBuffer.push_back(opponentMsg.data.movementUpdate);
-                break;
-            }
-        }
+        // switch (opponentMsg.type)
+        // {
+        //     case GameMessageType::MovementUpdate:
+        //     {
+        //         m_opponentMovementUpdatesBuffer.push_back(opponentMsg.data.movementUpdate);
+        //         break;
+        //     }
+        // }
     }
 }
 
@@ -167,46 +169,30 @@ void Game::sendPlayerMovementUpdate(const MovementUpdate &movementUpdate)
     m_network->sendPlayerMsg(msg);
 }
 
-void Game::renderPlayer(std::shared_ptr<Player> player)
-{
-    player->render(m_renderer);
-}
-
-void Game::render()
-{
-    SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
-    SDL_RenderClear(m_renderer);
-
-    renderPlayer(m_player);
-    renderPlayer(m_opponent);
-
-    SDL_RenderPresent(m_renderer);
-}
-
 void Game::updateOpponent(int deltaTime)
 {
-    MovementUpdate movementUpdate;
+    // MovementUpdate movementUpdate;
 
-    while (m_opponentMovementUpdatesBuffer.size() > MIN_OPPONENT_LAG_FRAMES)
-    {
-        movementUpdate = m_opponentMovementUpdatesBuffer.front();
-        m_opponentMovementUpdatesBuffer.pop_front();
+    // while (m_opponentMovementUpdatesBuffer.size() > MIN_OPPONENT_LAG_FRAMES)
+    // {
+    //     movementUpdate = m_opponentMovementUpdatesBuffer.front();
+    //     m_opponentMovementUpdatesBuffer.pop_front();
 
-        if (movementUpdate.inputEvent != InputEvent::None)
-        {
-            m_opponent->input(movementUpdate.inputEvent);
-        }
+    //     if (movementUpdate.inputEvent != InputEvent::None)
+    //     {
+    //         m_opponent->input(movementUpdate.inputEvent);
+    //     }
 
-        if (movementUpdate.direction != m_opponent->m_direction)
-        {
-            m_opponent->m_direction = movementUpdate.direction;
-        }
+    //     if (movementUpdate.direction != m_opponent->m_direction)
+    //     {
+    //         m_opponent->m_direction = movementUpdate.direction;
+    //     }
 
-        m_opponentNetcode.updateNetState(movementUpdate);
-    }
+    //     m_opponentNetcode.updateNetState(movementUpdate);
+    // }
 
-    m_opponent->update(deltaTime);
-    m_opponentNetcode.syncPlayerWithNetState(*m_opponent);
+    // m_opponent->update(deltaTime);
+    // m_opponentNetcode.syncPlayerWithNetState(*m_opponent);
 }
 
 void Game::handleEvent(const SDL_Event &event)
@@ -214,8 +200,8 @@ void Game::handleEvent(const SDL_Event &event)
     InputEvent playerInputEvent = SDLEventTranslator::translate(event);
     if (playerInputEvent != InputEvent::None)
     {
-        m_playerInputEvent = playerInputEvent;
-        m_player->input(m_playerInputEvent);
+        m_lastPlayerInputEvent = playerInputEvent;
+        m_thisPlayer->input(m_lastPlayerInputEvent);
     }
 }
 
@@ -223,24 +209,22 @@ void Game::update(const int deltaTime)
 {
     handleOpponentNetMsgs();
 
-    m_player->update(deltaTime);
+    m_thisPlayer->update(deltaTime);
     updateOpponent(deltaTime);
 
     MovementUpdate playerMovementUpdate;
-    playerMovementUpdate.posX = m_player->m_position.x;
-    playerMovementUpdate.posY = m_player->m_position.y;
-    playerMovementUpdate.velX = m_player->m_velocity.x;
-    playerMovementUpdate.velY = m_player->m_velocity.y;
-    playerMovementUpdate.inputEvent = m_playerInputEvent;
-    playerMovementUpdate.direction = m_player->m_direction;
+    playerMovementUpdate.posX = m_thisPlayer->m_position.x;
+    playerMovementUpdate.posY = m_thisPlayer->m_position.y;
+    playerMovementUpdate.velX = m_thisPlayer->m_velocity.x;
+    playerMovementUpdate.velY = m_thisPlayer->m_velocity.y;
+    playerMovementUpdate.inputEvent = m_lastPlayerInputEvent;
+    playerMovementUpdate.direction = m_thisPlayer->m_direction;
 
     sendPlayerMovementUpdate(playerMovementUpdate);
 }
 
 void Game::run()
 {
-    spawnPlayers();
-
     bool quit = false;
     SDL_Event event;
     FrameTimer frameTimer(GAME_TICK_RATE_MS);
@@ -263,9 +247,9 @@ void Game::run()
         }
 
         update(frameTimer.getDeltaTime());
-        render();
+        // render();
 
-        m_playerInputEvent = InputEvent::None;
+        m_lastPlayerInputEvent = InputEvent::None;
         frameTimer.endFrame();
     }
 }

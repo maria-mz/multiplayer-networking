@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <deque>
+#include <unordered_map>
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
@@ -20,28 +21,38 @@ constexpr const int GAME_TICK_RATE_MS = 16; // ~16 ms per frame (~60 updates per
 
 const Vector2D INITIAL_SPAWN_POSITION(0, 0);
 
-constexpr const int PLAYER_1_ID = 1;
-constexpr const int PLAYER_2_ID = 2;
-
 constexpr const int MIN_OPPONENT_LAG_FRAMES = 1;
+
+class Game;
+
+class RenderSystem
+{
+    public:
+        bool init();
+
+        void renderGame(Game& game);
+        void renderPlayer(Player& player);
+
+    private:
+        bool initWindow();
+        bool initRenderer();
+        bool initFonts();
+
+        SDL_Window *m_window;
+        SDL_Renderer *m_renderer;
+        FontManager m_fontManager;
+};
 
 class Game
 {
     public:
         Game();
 
-        bool init();
         void run();
 
         ~Game();
 
-    private:
-        bool initWindow();
-        bool initRenderer();
-        bool initTextures();
-
-        void spawnPlayers();
-
+    // private:
         void handleOpponentNetMsgs();
         void updateOpponent(int deltaTime);
 
@@ -50,23 +61,16 @@ class Game
         void handleEvent(const SDL_Event &event);
         void update(const int deltaTime);
 
-        void render();
-        void renderPlayer(std::shared_ptr<Player> player);
-
-        SDL_Window *m_window;
-        SDL_Renderer *m_renderer;
-        FontManager m_fontManager;
-
-        std::shared_ptr<Player> m_player;
-        std::shared_ptr<Player> m_opponent;
-
-        InputEvent m_playerInputEvent;
+        InputEvent m_lastPlayerInputEvent;
 
         bool m_isHost;
+        int m_playerIDCounter = 1;
 
         std::shared_ptr<NetworkManager> m_network;
-        Netcode m_opponentNetcode;
-        std::deque<MovementUpdate> m_opponentMovementUpdatesBuffer;
+        // Netcode m_opponentNetcode;
+        // std::deque<MovementUpdate> m_opponentMovementUpdatesBuffer;
+
+        std::unique_ptr<Player> m_thisPlayer;
 };
 
 #endif
