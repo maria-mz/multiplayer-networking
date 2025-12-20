@@ -13,7 +13,7 @@ class FontManager
     public:
         ~FontManager();
 
-        bool loadFont(const char* file, int fontSizePx, SDL_Renderer* renderer);
+        bool loadFont(const char* file, int fontSizePx);
         TTF_Font* getFont(const char* file, int fontSizePx);
         void removeFont(const char* file, int fontSizePx);
 

@@ -6,7 +6,6 @@
 #include "SDL2/SDL.h"
 
 #include "Constants.h"
-#include "Resources.h"
 #include "Input.h"
 #include "Utils/Vector2D.h"
 
@@ -87,7 +86,6 @@ class Player
         PlayerState getState() const;
         void changeState(PlayerState state);
 
-        void updateDirection(Direction direction);
         void boundPosition();
 
         Vector2D<float> m_position;

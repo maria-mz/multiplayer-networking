@@ -10,7 +10,6 @@
 
 #include "Logging.h"
 #include "Player.h"
-#include "Resources.h"
 #include "NetworkManager.h"
 #include "Netcode.h"
 #include "FrameTimer.h"
@@ -53,11 +52,11 @@ class Game
         void update(const int deltaTime);
 
         void render();
-        void renderGameplay();
         void renderPlayer(std::shared_ptr<Player> player);
 
         SDL_Window *m_window;
         SDL_Renderer *m_renderer;
+        FontManager m_fontManager;
 
         std::shared_ptr<Player> m_player;
         std::shared_ptr<Player> m_opponent;

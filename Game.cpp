@@ -71,8 +71,6 @@ bool Game::initRenderer()
     {
         SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 
-        Resources::renderer = m_renderer;
-
         if (IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG)
         {
             LOG_ERROR("Couldn't initialize SDL_image: %s", SDL_GetError());
@@ -88,9 +86,9 @@ bool Game::initTextures()
     bool success = true;
 
     if (
-        !Resources::fonts.loadFont(Constants::FILE_FONT_MAIN, 8, m_renderer) ||
-        !Resources::fonts.loadFont(Constants::FILE_FONT_MAIN, 12, m_renderer) ||
-        !Resources::fonts.loadFont(Constants::FILE_FONT_MAIN, 18, m_renderer)
+        !m_fontManager.loadFont(Constants::FILE_FONT_MAIN, 8) ||
+        !m_fontManager.loadFont(Constants::FILE_FONT_MAIN, 12) ||
+        !m_fontManager.loadFont(Constants::FILE_FONT_MAIN, 18)
     )
     {
         success = false;
@@ -190,15 +188,10 @@ void Game::render()
     SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
     SDL_RenderClear(m_renderer);
 
-    renderGameplay();
-
-    SDL_RenderPresent(m_renderer);
-}
-
-void Game::renderGameplay()
-{
     renderPlayer(m_player);
     renderPlayer(m_opponent);
+
+    SDL_RenderPresent(m_renderer);
 }
 
 void Game::updateOpponent(int deltaTime)
