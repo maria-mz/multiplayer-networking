@@ -8,7 +8,6 @@
 #include "Constants.h"
 #include "Resources.h"
 #include "Input.h"
-#include "Sprite.h"
 #include "Utils/Vector2D.h"
 
 class InputManager
@@ -29,13 +28,7 @@ enum class PlayerState
 {
     Idle,
     Run,
-    Attack,
-    Knockback,
-    Block
 };
-
-void setPlayerTexturesRed(Player &player);
-void setPlayerTexturesBlue(Player &player);
 
 // Interface for all states
 class PlayerStateInterface
@@ -47,9 +40,6 @@ class PlayerStateInterface
         virtual void input(Player &player, InputEvent inputEvent) = 0;
         virtual void update(Player &player, int deltaTime) = 0;
         virtual void exit(Player &player) = 0;
-
-        virtual SDL_Texture *getTexture(const Player &player) = 0;
-        virtual std::shared_ptr<Animation> getAnimation(const Player &player) = 0;
 };
 
 class PlayerStateIdle : public PlayerStateInterface {
@@ -58,9 +48,6 @@ class PlayerStateIdle : public PlayerStateInterface {
         void input(Player &player, InputEvent inputEvent) override;
         void update(Player &player, int deltaTime) override;
         void exit(Player &player) override;
-
-        SDL_Texture *getTexture(const Player &player) override;
-        std::shared_ptr<Animation> getAnimation(const Player &player) override;
 };
 
 class PlayerStateRun : public PlayerStateInterface {
@@ -69,42 +56,6 @@ class PlayerStateRun : public PlayerStateInterface {
         void input(Player &player, InputEvent inputEvent) override;
         void update(Player &player, int deltaTime) override;
         void exit(Player &player) override;
-
-        SDL_Texture *getTexture(const Player &player) override;
-        std::shared_ptr<Animation> getAnimation(const Player &player) override;
-};
-
-class PlayerStateAttack : public PlayerStateInterface {
-    public:
-        void enter(Player &player) override;
-        void input(Player &player, InputEvent inputEvent) override;
-        void update(Player &player, int deltaTime) override;
-        void exit(Player &player) override;
-
-        SDL_Texture *getTexture(const Player &player) override;
-        std::shared_ptr<Animation> getAnimation(const Player &player) override;
-};
-
-class PlayerStateKnockback : public PlayerStateInterface {
-    public:
-        void enter(Player &player) override;
-        void input(Player &player, InputEvent inputEvent) override;
-        void update(Player &player, int deltaTime) override;
-        void exit(Player &player) override;
-
-        SDL_Texture *getTexture(const Player &player) override;
-        std::shared_ptr<Animation> getAnimation(const Player &player) override;
-};
-
-class PlayerStateBlock : public PlayerStateInterface {
-    public:
-        void enter(Player &player) override;
-        void input(Player &player, InputEvent inputEvent) override;
-        void update(Player &player, int deltaTime) override;
-        void exit(Player &player) override;
-
-        SDL_Texture *getTexture(const Player &player) override;
-        std::shared_ptr<Animation> getAnimation(const Player &player) override;
 };
 
 struct Transform
@@ -123,8 +74,8 @@ enum class Direction
 class Player
 {
     public:
+        static constexpr int WIDTH_PX = 32;
         static constexpr float SPEED = 0.35; // Pixels per ms
-        static constexpr int HIT_DMG = 10;
 
         Player();
         ~Player();
@@ -133,40 +84,20 @@ class Player
         void setVelocity(float x, float y);
         void setScale(int scale);
 
-        void setTexture(PlayerState state, SDL_Texture *texture);
-        SDL_Texture *getTexture(PlayerState state) const;
-
-        int getHealth();
-
         void input(InputEvent inputEvent);
         void update(int deltaTime);
-        void render(
-            SDL_Renderer *renderer,
-            bool drawBoundingBox = false,
-            bool drawHitBox = false,
-            bool drawHurtBox = false
-        ) const;
+        void render(SDL_Renderer *renderer) const;
 
         PlayerState getState() const;
         Direction getDirection() const;
 
         void updateDirection(Direction direction);
 
-        bool isHitBy(const Player &opponent) const;
-        void registerHitTaken(const Player &opponent);
-
     // private:
-        AnimationManager<PlayerState> makeAnimationManager() const;
-
         void changeState(PlayerState state);
         void boundPosition();
 
         SDL_Rect getBoundingBox() const;
-        SDL_Rect getHitBox() const;
-        SDL_Rect getHurtBox() const;
-
-        SDL_Rect transformBoxToRenderSpace(SDL_Rect box) const;
-        SDL_Rect transformPlayerToRenderSpace() const;
 
         void renderBox(SDL_Renderer *renderer, SDL_Rect box) const;
         void renderPlayer(SDL_Renderer *renderer) const;
@@ -176,17 +107,10 @@ class Player
         Transform m_transform;
         Direction m_direction;
 
-        int m_health;
-
-        bool m_isImmune;
-
         InputManager m_inputManager;
-        AnimationManager<PlayerState> m_animationManager;
 
         PlayerState m_currentState;
         PlayerStateInterface *m_stateObject;
-
-        std::map<PlayerState, SDL_Texture*> m_textures;
 };
 
 #endif

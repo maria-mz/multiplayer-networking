@@ -19,7 +19,6 @@ enum class GameMessageType : uint8_t
 {
     Unknown = 0,
     MovementUpdate,
-    ServerRegisteredHit
 };
 
 struct MovementUpdate

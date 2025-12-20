@@ -16,10 +16,6 @@
 #include "FrameTimer.h"
 #include "Utils/Utils.h"
 #include "UI/MenuUI.h"
-#include "UI/GameplayUI.h"
-
-// Uncomment to see bounding, hit, and hurt boxes
-#define DEBUG_MODE
 
 constexpr const int GAME_TICK_RATE_MS = 16; // ~16 ms per frame (~60 updates per second)
 
@@ -30,12 +26,6 @@ constexpr const int PLAYER_1_ID = 1;
 constexpr const int PLAYER_2_ID = 2;
 
 constexpr const int MIN_OPPONENT_LAG_FRAMES = 1;
-
-enum class GameState
-{
-    Menu,
-    Gameplay
-};
 
 class Game
 {
@@ -58,13 +48,11 @@ class Game
         void updateOpponent(int deltaTime);
 
         void sendPlayerMovementUpdate(const MovementUpdate &movementUpdate);
-        void sendHitRegistered(const HitRegistered &hitRegistered);
 
         void handleEvent(const SDL_Event &event);
         void update(const int deltaTime);
 
         void render();
-        void renderMenu();
         void renderGameplay();
         void renderPlayer(std::shared_ptr<Player> player);
 
@@ -81,11 +69,6 @@ class Game
         std::shared_ptr<NetworkManager> m_network;
         Netcode m_opponentNetcode;
         std::deque<MovementUpdate> m_opponentMovementUpdatesBuffer;
-
-        GameState m_gameState = GameState::Menu;
-
-        MenuUI m_menuUI;
-        GameplayUI m_gameplayUI;
 };
 
 #endif

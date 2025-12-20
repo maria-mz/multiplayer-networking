@@ -87,33 +87,6 @@ bool Game::initTextures()
 {
     bool success = true;
 
-    std::vector<const char*> textureFiles = {
-        Constants::FILE_SPRITE_PLAYER_IDLE_RED,
-        Constants::FILE_SPRITE_PLAYER_IDLE_BLUE,
-        Constants::FILE_SPRITE_PLAYER_RUN_RED,
-        Constants::FILE_SPRITE_PLAYER_RUN_BLUE,
-        Constants::FILE_SPRITE_PLAYER_ATTACK_RED,
-        Constants::FILE_SPRITE_PLAYER_ATTACK_BLUE,
-        Constants::FILE_SPRITE_PLAYER_KNOCKBACK_RED,
-        Constants::FILE_SPRITE_PLAYER_KNOCKBACK_BLUE,
-        Constants::FILE_SPRITE_PLAYER_BLOCK_RED,
-        Constants::FILE_SPRITE_PLAYER_BLOCK_BLUE,
-        Constants::FILE_SPRITE_PLAYER_PROFILE_RED,
-        Constants::FILE_SPRITE_PLAYER_PROFILE_BLUE,
-        Constants::FILE_SPRITE_HEALTH_BAR_OK,
-        Constants::FILE_SPRITE_HEALTH_BAR_LOW,
-        Constants::FILE_CURSOR
-    };
-
-    for (const auto &file : textureFiles)
-    {
-        if (!Resources::textures.loadTexture(file, m_renderer))
-        {
-            success = false;
-            break;
-        }
-    }
-
     if (
         !Resources::fonts.loadFont(Constants::FILE_FONT_MAIN, 8, m_renderer) ||
         !Resources::fonts.loadFont(Constants::FILE_FONT_MAIN, 12, m_renderer) ||
@@ -147,45 +120,6 @@ bool Game::init()
         m_opponent = std::unique_ptr<Player>(new Player());
 
         m_network = std::shared_ptr<NetworkManager>(new NetworkManager());
-
-        m_menuUI.init();
-        m_menuUI.setOnHostGameButtonClick([this]() {
-            m_isHost = true;
-            m_network->setIsHost(true);
-            m_network->startServer();
-            m_gameState = GameState::Gameplay;
-            setPlayerTexturesRed(*m_player);
-            setPlayerTexturesBlue(*m_opponent);
-            spawnPlayers();
-            m_player->updateDirection(Direction::Right);
-            m_opponent->updateDirection(Direction::Left);
-        });
-
-        m_menuUI.setOnJoinGameButtonClick([this]() {
-            m_isHost = false;
-            m_network->setIsHost(false);
-            bool isConnected = m_network->connectToServer(m_menuUI.getIPAddressFromTextField());
-            if (isConnected)
-            {
-                m_gameState = GameState::Gameplay;
-                setPlayerTexturesBlue(*m_player);
-                setPlayerTexturesRed(*m_opponent);
-                spawnPlayers();
-                m_player->updateDirection(Direction::Left);
-                m_opponent->updateDirection(Direction::Right);
-            }
-            else
-            {
-                LOG_ERROR("Failed to join game");
-            }
-        });
-
-        m_gameplayUI.init();
-
-        SDL_Surface* surface = IMG_Load(Constants::FILE_CURSOR);
-        SDL_Cursor* cursor = SDL_CreateColorCursor(surface, 12, 8);
-        SDL_SetCursor(cursor);
-        SDL_FreeSurface(surface);
     }
 
     return success;
@@ -193,8 +127,8 @@ bool Game::init()
 
 void Game::spawnPlayers()
 {
-    m_player->setScale(5);
-    m_opponent->setScale(5);
+    m_player->setScale(2);
+    m_opponent->setScale(2);
 
     if (m_isHost)
     {
@@ -227,21 +161,6 @@ void Game::handleOpponentNetMsgs()
                 m_opponentMovementUpdatesBuffer.push_back(opponentMsg.data.movementUpdate);
                 break;
             }
-            case GameMessageType::ServerRegisteredHit:
-            {
-                HitRegistered hitRegistered = opponentMsg.data.hitRegistered;
-
-                if (hitRegistered.hitPlayerID == PLAYER_1_ID)
-                {
-                    m_opponent->registerHitTaken(*m_player);
-                }
-                else if (hitRegistered.hitPlayerID == PLAYER_2_ID)
-                {
-                    m_player->registerHitTaken(*m_opponent);
-                }
-
-                break;
-            }
         }
     }
 }
@@ -255,82 +174,25 @@ void Game::sendPlayerMovementUpdate(const MovementUpdate &movementUpdate)
     m_network->sendPlayerMsg(msg);
 }
 
-void Game::sendHitRegistered(const HitRegistered &hitRegistered)
-{
-    if (!m_isHost)
-    {
-        throw std::logic_error("Only the host can send ServerRegisteredHit messages");
-    }
-
-    GameMessage msg;
-    msg.type = GameMessageType::ServerRegisteredHit;
-    msg.data.hitRegistered = hitRegistered;
-
-    m_network->sendPlayerMsg(msg);
-}
-
 void Game::renderPlayer(std::shared_ptr<Player> player)
 {
-    #ifdef DEBUG_MODE
-    player->render(m_renderer, true, true, true);
-    #else
     player->render(m_renderer);
-    #endif
 }
 
 void Game::render()
 {
-    SDL_SetRenderDrawColor(m_renderer, 67, 67, 67, 255);
+    SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
     SDL_RenderClear(m_renderer);
 
-    switch (m_gameState)
-    {
-        case GameState::Menu:
-        {
-            renderMenu();
-            break;
-        }
-        case GameState::Gameplay:
-        {
-            renderGameplay();
-            break;
-        }
-    }
+    renderGameplay();
 
     SDL_RenderPresent(m_renderer);
 }
 
-void Game::renderMenu()
-{
-    m_menuUI.render();
-}
-
 void Game::renderGameplay()
 {
-    SDL_Rect groundRect = {0, 360, Constants::WINDOW_WIDTH, 120};
-    SDL_SetRenderDrawColor(Resources::renderer, 50, 50, 50, 255);
-    SDL_RenderFillRect(Resources::renderer, &groundRect);
-
-    if (m_opponent->getState() == PlayerState::Attack &&
-        m_player->getState() != PlayerState::Attack)
-    {
-        renderPlayer(m_player);
-        renderPlayer(m_opponent);
-    }
-    else
-    {
-        renderPlayer(m_opponent);
-        renderPlayer(m_player);
-    }
-
-    if (m_isHost)
-    {
-        m_gameplayUI.render(m_player->getHealth(), m_opponent->getHealth());
-    }
-    else
-    {
-        m_gameplayUI.render(m_opponent->getHealth(), m_player->getHealth());
-    }
+    renderPlayer(m_player);
+    renderPlayer(m_opponent);
 }
 
 void Game::updateOpponent(int deltaTime)
@@ -361,74 +223,30 @@ void Game::updateOpponent(int deltaTime)
 
 void Game::handleEvent(const SDL_Event &event)
 {
-    switch (m_gameState)
+    InputEvent playerInputEvent = SDLEventTranslator::translate(event);
+    if (playerInputEvent != InputEvent::None)
     {
-        case GameState::Gameplay:
-        {
-            InputEvent playerInputEvent = SDLEventTranslator::translate(event);
-            if (playerInputEvent != InputEvent::None)
-            {
-                m_playerInputEvent = playerInputEvent;
-                m_player->input(m_playerInputEvent);
-            }
-
-            break;
-        }
-        case GameState::Menu:
-        {
-            m_menuUI.handleEvent(event);
-            break;
-        }
+        m_playerInputEvent = playerInputEvent;
+        m_player->input(m_playerInputEvent);
     }
 }
 
 void Game::update(const int deltaTime)
 {
-    switch (m_gameState)
-    {
-        case GameState::Gameplay:
-        {
-            handleOpponentNetMsgs();
+    handleOpponentNetMsgs();
 
-            m_player->update(deltaTime);
-            updateOpponent(deltaTime);
+    m_player->update(deltaTime);
+    updateOpponent(deltaTime);
 
-            bool isPlayerHit = m_player->isHitBy(*m_opponent);
-            bool isOpponentHit = m_opponent->isHitBy(*m_player);
+    MovementUpdate playerMovementUpdate;
+    playerMovementUpdate.posX = m_player->m_position.x;
+    playerMovementUpdate.posY = m_player->m_position.y;
+    playerMovementUpdate.velX = m_player->m_velocity.x;
+    playerMovementUpdate.velY = m_player->m_velocity.y;
+    playerMovementUpdate.inputEvent = m_playerInputEvent;
+    playerMovementUpdate.direction = m_player->getDirection();
 
-            if (m_isHost)
-            {
-                HitRegistered hitRegistered;
-
-                if (isPlayerHit)
-                {
-                    m_player->registerHitTaken(*m_opponent);
-
-                    hitRegistered.hitPlayerID = PLAYER_1_ID;
-                    sendHitRegistered(hitRegistered);
-                }
-                if (isOpponentHit)
-                {
-                    m_opponent->registerHitTaken(*m_player);
-
-                    hitRegistered.hitPlayerID = PLAYER_2_ID;
-                    sendHitRegistered(hitRegistered);
-                }
-            }
-
-            MovementUpdate playerMovementUpdate;
-            playerMovementUpdate.posX = m_player->m_position.x;
-            playerMovementUpdate.posY = m_player->m_position.y;
-            playerMovementUpdate.velX = m_player->m_velocity.x;
-            playerMovementUpdate.velY = m_player->m_velocity.y;
-            playerMovementUpdate.inputEvent = m_playerInputEvent;
-            playerMovementUpdate.direction = m_player->getDirection();
-
-            sendPlayerMovementUpdate(playerMovementUpdate);
-
-            break;
-        }
-    }
+    sendPlayerMovementUpdate(playerMovementUpdate);
 }
 
 void Game::run()

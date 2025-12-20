@@ -6,20 +6,14 @@
 enum class Input {
     MoveLeft,
     MoveRight,
-    Attack,
-    Block
 };
 
 enum class InputEvent {
     None,
     MoveLeft_Pressed,
     MoveRight_Pressed,
-    Attack_Pressed,
-    Block_Pressed,
     MoveLeft_Released,
     MoveRight_Released,
-    Attack_Released,
-    Block_Released
 };
 
 class SDLEventTranslator
@@ -35,8 +29,6 @@ class SDLEventTranslator
                 {
                     case SDLK_d: inputEvent = InputEvent::MoveRight_Pressed; break;
                     case SDLK_a: inputEvent = InputEvent::MoveLeft_Pressed; break;
-                    case SDLK_k: inputEvent = InputEvent::Attack_Pressed; break;
-                    case SDLK_m: inputEvent = InputEvent::Block_Pressed; break;
                 }
             }
 
@@ -46,8 +38,6 @@ class SDLEventTranslator
                 {
                     case SDLK_d: inputEvent = InputEvent::MoveRight_Released; break;
                     case SDLK_a: inputEvent = InputEvent::MoveLeft_Released; break;
-                    case SDLK_k: inputEvent = InputEvent::Attack_Released; break;
-                    case SDLK_m: inputEvent = InputEvent::Block_Released; break;
                 }
             }
 

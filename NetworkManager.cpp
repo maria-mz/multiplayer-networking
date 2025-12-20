@@ -52,11 +52,17 @@ void NetworkManager::sendPlayerMsg(GameMessage &msg)
 
     if (m_isHost)
     {
-        m_server->broadcast(netMsg);
+        if (m_server)
+        {
+            m_server->broadcast(netMsg);
+        }
     }
     else
     {
-        m_client->send(netMsg);
+        if (m_client)
+        {
+            m_client->send(netMsg);
+        }
     }
 }
 
@@ -67,11 +73,17 @@ bool NetworkManager::receiveOpponentMsg(GameMessage &msg)
 
     if (m_isHost)
     {
-        m_server->recv(m_opponentClientID, netMsg);
+        if (m_server)
+        {
+            m_server->recv(m_opponentClientID, netMsg);
+        }
     }
     else
     {
-        m_client->recv(netMsg);
+        if (m_client)
+        {
+            m_client->recv(netMsg);
+        }
     }
 
     if (netMsg.header.type == NetMessageType::Data)
