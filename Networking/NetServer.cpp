@@ -59,6 +59,8 @@ void NetServer::disconnectClient(ClientID clientID)
         {
             client->m_socket.close();
 
+            LOG_INFO("Client with ID %d disconnected", clientID);
+
             if (m_onClientDisconnect)
             {
                 m_onClientDisconnect(client->m_id);
@@ -141,11 +143,14 @@ bool NetServer::send(ClientID clientID, NetMessage &msg)
 }
 
 
-void NetServer::broadcast(NetMessage &msg)
+void NetServer::broadcast(NetMessage &msg, std::optional<ClientID> ignoreClientID)
 {
     for (auto &pair : m_clients)
     {
-        pair.second->send(msg);
+        if (!ignoreClientID || pair.first != *ignoreClientID)
+        {
+            pair.second->send(msg);
+        }
     }
 }
 
@@ -200,6 +205,19 @@ std::shared_ptr<NetConnection> NetServer::getClient(ClientID clientID)
     }
 
     return nullptr;
+}
+
+
+std::vector<ClientID> NetServer::getClientIDs()
+{
+    std::vector<ClientID> ids;
+    ids.reserve(m_clients.size());
+
+    for (const auto& pair : m_clients) {
+        ids.push_back(pair.first);
+    }
+
+    return ids;
 }
 
 

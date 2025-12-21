@@ -27,7 +27,7 @@ class NetServer
         void shutdown();
 
         bool send(ClientID clientID, NetMessage &msg);
-        void broadcast(NetMessage &msg);
+        void broadcast(NetMessage &msg, std::optional<ClientID> ignoreClientID);
         bool recv(ClientID clientID, NetMessage &msg);
         bool blockingRecv(ClientID clientID, NetMessage &msg);
 
@@ -37,6 +37,8 @@ class NetServer
 
         void setOnClientConnect(std::function<void(ClientID)> callback) { m_onClientConnect = std::move(callback); }
         void setOnClientDisconnect(std::function<void(ClientID)> callback) { m_onClientDisconnect = std::move(callback); }
+
+        std::vector<ClientID> getClientIDs();
 
     private:
         void accept();
