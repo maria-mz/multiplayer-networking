@@ -5,7 +5,6 @@
 #include <string>
 #include <SDL2/SDL.h>
 
-#include "../Resources.h"
 #include "Text.h"
 
 class TextField {
@@ -21,9 +20,9 @@ class TextField {
             m_hintTextUI = std::make_unique<Text>(textHintConfig);
         }
 
-        void setTextHint(std::string text)
+        void setTextHint(std::string text, SDL_Renderer *renderer)
         {
-            m_hintTextUI->setText(text);
+            m_hintTextUI->setText(text, renderer);
         }
 
         std::string getText()
@@ -31,41 +30,43 @@ class TextField {
             return m_text;
         }
 
-        void render()
+        void render(SDL_Renderer* renderer)
         {
             // update text if changed
             if (m_textUI && m_textUI->getText() != m_text)
             {
-                m_textUI->setText(m_text);
+                m_textUI->setText(m_text, renderer);
             }
 
             // draw text field
-            SDL_SetRenderDrawColor(Resources::renderer, 30, 30, 30, 255);
-            SDL_RenderFillRect(Resources::renderer, &m_rect);
+            SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
+            SDL_RenderFillRect(renderer, &m_rect);
 
             // set outline color
             if (m_isActive)
             {
-                SDL_SetRenderDrawColor(Resources::renderer, 255, 255, 255, 255);
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
             }
             else
             {
-                SDL_SetRenderDrawColor(Resources::renderer, 120, 120, 120, 255);
+                SDL_SetRenderDrawColor(renderer, 120, 120, 120, 255);
             }
 
             // draw outline
-            SDL_RenderDrawRect(Resources::renderer, &m_rect);
+            SDL_RenderDrawRect(renderer, &m_rect);
 
             // draw text
             if (m_hintTextUI && m_text.empty())
             {
                 m_hintTextUI->render(m_rect.x + 10,
-                                     m_rect.y + (m_rect.h - m_hintTextUI->getHeight()) / 2);
+                                     m_rect.y + (m_rect.h - m_hintTextUI->getHeight()) / 2,
+                                     renderer);
             }
             else if (m_textUI)
             {
                 m_textUI->render(m_rect.x + 10,
-                                 m_rect.y + (m_rect.h - m_textUI->getHeight()) / 2);
+                                 m_rect.y + (m_rect.h - m_textUI->getHeight()) / 2,
+                                 renderer);
             }
         }
 

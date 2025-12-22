@@ -5,7 +5,6 @@
 #include <string>
 #include <SDL2/SDL.h>
 
-#include "../Resources.h"
 #include "Text.h"
 
 class Button {
@@ -22,13 +21,13 @@ class Button {
         , m_isPressed(false)
         , m_onClick(nullptr) {}
 
-        void setText(std::string text, TextConfig textConfig)
+        void setText(std::string text, TextConfig textConfig, SDL_Renderer *renderer)
         {
             if (!m_text)
             {
                 m_text = std::make_unique<Text>(textConfig);
             }
-            m_text->setText(text);
+            m_text->setText(text, renderer);
         }
 
         void setMainColor(SDL_Color color)
@@ -51,15 +50,15 @@ class Button {
             m_onClick = std::move(callback);
         }
 
-        void render() {
+        void render(SDL_Renderer* renderer) {
             SDL_Rect renderRect = m_rect;
 
             if (!m_isPressed)
             {
                 SDL_Rect shadowRect = {m_rect.x, m_rect.y + 4, m_rect.w, m_rect.h};
-                SDL_SetRenderDrawBlendMode(Resources::renderer, SDL_BLENDMODE_BLEND);
-                SDL_SetRenderDrawColor(Resources::renderer, m_shadowColor.r, m_shadowColor.g, m_shadowColor.b, 100);
-                SDL_RenderFillRect(Resources::renderer, &shadowRect);
+                SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+                SDL_SetRenderDrawColor(renderer, m_shadowColor.r, m_shadowColor.g, m_shadowColor.b, 100);
+                SDL_RenderFillRect(renderer, &shadowRect);
             }
             else
             {
@@ -68,19 +67,20 @@ class Button {
 
             if (m_isHover)
             {
-                SDL_SetRenderDrawColor(Resources::renderer, m_hoverColor.r, m_hoverColor.g, m_hoverColor.b, 255);
+                SDL_SetRenderDrawColor(renderer, m_hoverColor.r, m_hoverColor.g, m_hoverColor.b, 255);
             }
             else
             {
-                SDL_SetRenderDrawColor(Resources::renderer, m_mainColor.r, m_mainColor.g, m_mainColor.b, 255);
+                SDL_SetRenderDrawColor(renderer, m_mainColor.r, m_mainColor.g, m_mainColor.b, 255);
             }
 
-            SDL_RenderFillRect(Resources::renderer, &renderRect);
+            SDL_RenderFillRect(renderer, &renderRect);
 
             if (m_text)
             {
                 m_text->render(renderRect.x + (renderRect.w - m_text->getWidth()) / 2,
-                               renderRect.y + (renderRect.h - m_text->getHeight()) / 2);
+                               renderRect.y + (renderRect.h - m_text->getHeight()) / 2,
+                               renderer);
             }
         }
 

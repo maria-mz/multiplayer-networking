@@ -9,7 +9,7 @@ FontManager::~FontManager()
     }
 }
 
-bool FontManager::loadFont(const char *file, int fontSizePx, SDL_Renderer* renderer)
+bool FontManager::loadFont(const char *file, int fontSizePx)
 {
     removeFont(file, fontSizePx);
 

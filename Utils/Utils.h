@@ -1,9 +1,12 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-inline int computeHP(int health, int maxHealth)
+#include <thread>
+#include <chrono>
+
+inline void sleepMs(int milliseconds)
 {
-    return health * 100.0f / maxHealth;
+    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
 }
 
 #endif

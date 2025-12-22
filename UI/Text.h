@@ -5,8 +5,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-#include "../Resources.h"
-
 struct TextConfig
 {
     TTF_Font *font;
@@ -47,7 +45,7 @@ class Text
             return m_surfaceHeight;
         }
 
-        void setText(std::string text)
+        void setText(std::string text, SDL_Renderer* renderer)
         {
             if (m_text == text)
             {
@@ -79,7 +77,7 @@ class Text
                 // Blit main text onto outlined background
                 SDL_BlitSurface(mainSurface, NULL, outlineSurface, NULL);
 
-                m_texture = SDL_CreateTextureFromSurface(Resources::renderer, outlineSurface);
+                m_texture = SDL_CreateTextureFromSurface(renderer, outlineSurface);
                 m_surfaceWidth = outlineSurface->w;
                 m_surfaceHeight = outlineSurface->h;
 
@@ -90,7 +88,7 @@ class Text
             {
                 SDL_Surface* mainSurface = TTF_RenderText_Blended(m_config.font, m_text.c_str(), m_config.color);
 
-                m_texture = SDL_CreateTextureFromSurface(Resources::renderer, mainSurface);
+                m_texture = SDL_CreateTextureFromSurface(renderer, mainSurface);
                 m_surfaceWidth = mainSurface->w;
                 m_surfaceHeight = mainSurface->h;
 
@@ -98,7 +96,7 @@ class Text
             }
         }
 
-        void render(int x, int y)
+        void render(int x, int y, SDL_Renderer* renderer)
         {
             if (m_text.empty())
             {
@@ -106,7 +104,7 @@ class Text
             }
 
             SDL_Rect dstRect = {x, y, m_surfaceWidth, m_surfaceHeight};
-            SDL_RenderCopy(Resources::renderer, m_texture, NULL, &dstRect);
+            SDL_RenderCopy(renderer, m_texture, NULL, &dstRect);
         }
 
     private:

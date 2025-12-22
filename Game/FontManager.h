@@ -6,14 +6,14 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-#include "Logging.h"
+#include "../Logging.h"
 
 class FontManager
 {
     public:
         ~FontManager();
 
-        bool loadFont(const char* file, int fontSizePx, SDL_Renderer* renderer);
+        bool loadFont(const char* file, int fontSizePx);
         TTF_Font* getFont(const char* file, int fontSizePx);
         void removeFont(const char* file, int fontSizePx);
 
