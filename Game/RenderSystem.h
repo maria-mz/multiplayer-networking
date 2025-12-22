@@ -66,12 +66,6 @@ class RenderSystem
             SDL_RenderPresent(m_renderer);
         }
 
-        void renderPlayer(Player& player)
-        {
-            assert(m_renderer != nullptr);
-            player.render(m_renderer);
-        }
-
     private:
         bool initWindow()
         {
@@ -150,6 +144,17 @@ class RenderSystem
             return success;
         }
 
+        void renderPlayer(Player& player)
+        {
+            assert(m_renderer != nullptr);
+
+            SDL_SetRenderDrawColor(m_renderer, 0, 0, 255, 255); // Blue
+
+            SDL_Rect box = player.getBoundingBox();
+            SDL_RenderDrawRect(m_renderer, &box);
+        }
+
+    private:
         SDL_Window *m_window;
         SDL_Renderer *m_renderer;
         FontManager m_fontManager;

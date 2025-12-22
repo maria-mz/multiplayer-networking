@@ -158,6 +158,21 @@ Player::~Player()
     m_stateObject->exit(*this);
 }
 
+PlayerState Player::getState() const
+{
+    return m_currentState;
+}
+
+SDL_Rect Player::getBoundingBox() const
+{
+    SDL_Rect rect{static_cast<int>(m_position.x),
+                  static_cast<int>(m_position.y),
+                  WIDTH_PX * static_cast<int>(m_transform.scale),
+                  WIDTH_PX * static_cast<int>(m_transform.scale)};
+
+    return rect;
+}
+
 void Player::input(GameEvent inputEvent)
 {
     m_inputManager.input(inputEvent);
@@ -169,32 +184,6 @@ void Player::update(int deltaTime)
 {
     m_stateObject->update(*this, deltaTime);
     boundPosition();
-}
-
-void Player::render(SDL_Renderer *renderer) const
-{
-    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); // Blue
-    renderBox(renderer, getBoundingBox());
-}
-
-void Player::renderBox(SDL_Renderer *renderer, SDL_Rect box) const
-{
-    // SDL Seems to draw a single pixel when the area is 0, but ideally
-    // if area is 0 don't draw anything
-    if (box.w * box.h > 0)
-    {
-        SDL_RenderDrawRect(renderer, &box);
-    }
-}
-
-SDL_Rect Player::getBoundingBox() const
-{
-    SDL_Rect rect{static_cast<int>(m_position.x),
-                  static_cast<int>(m_position.y),
-                  WIDTH_PX * static_cast<int>(m_transform.scale),
-                  WIDTH_PX * static_cast<int>(m_transform.scale)};
-
-    return rect;
 }
 
 void Player::maybeChangeState(PlayerState state)
@@ -233,9 +222,3 @@ void Player::boundPosition()
         m_position.x = Constants::WINDOW_WIDTH - boundingBox.w;
     }
 }
-
-PlayerState Player::getState() const
-{
-    return m_currentState;
-}
-

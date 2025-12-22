@@ -87,13 +87,12 @@ class Player
         Player();
         ~Player();
 
+        PlayerState getState() const;
+        SDL_Rect getBoundingBox() const;
+
         void input(GameEvent inputEvent);
         void update(int deltaTime);
-        void render(SDL_Renderer *renderer) const;
-
-        PlayerState getState() const;
         void maybeChangeState(PlayerState state);
-
         void boundPosition();
 
         Vector2D<float> m_position;
@@ -104,10 +103,6 @@ class Player
         InputManager m_inputManager;
 
     private:
-        SDL_Rect getBoundingBox() const;
-
-        void renderBox(SDL_Renderer *renderer, SDL_Rect box) const;
-
         PlayerState m_currentState;
         std::unique_ptr<PlayerStateInterface> m_stateObject;
 };
