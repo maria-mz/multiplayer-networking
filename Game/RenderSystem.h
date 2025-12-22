@@ -6,8 +6,10 @@
 #include "SDL2/SDL_image.h"
 
 #include "../Logging.h"
-#include "../Player.h"
-#include "../FontManager.h"
+#include "Player.h"
+#include "FontManager.h"
+
+#include "GameSimulation.h"
 
 
 class RenderSystem
@@ -49,18 +51,16 @@ class RenderSystem
             return success;
         }
 
-        void renderGame(std::vector<Player> players)
+        void renderGame(GameSimulation& gameSimulation)
         {
             assert(m_renderer != nullptr);
 
             SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
             SDL_RenderClear(m_renderer);
 
-            auto it = players.begin();
-            while (it != players.end())
+            for (auto& [id, player] : gameSimulation.getPlayers())
             {
-                renderPlayer(*it);
-                it++;
+                renderPlayer(*player);
             }
 
             SDL_RenderPresent(m_renderer);

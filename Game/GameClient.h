@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Networking/NetClient.h"
-#include "../Networking/NetMessages.h"
+#include "../networking/NetClient.h"
+#include "../networking/NetMessages.h"
 
 #include "GameMessage.h"
 
@@ -22,7 +22,6 @@ class GameClient
         bool connectToServer(std::string serverIP, int serverPort)
         {
             bool isConnected = m_netClient->connectToServer(serverIP, std::to_string(serverPort));
-
             return isConnected;
         }
 
@@ -36,7 +35,7 @@ class GameClient
             m_netClient->disconnect();
         }
 
-        void sendMessagesToServer(const std::vector<GameMessage>& outMessages)
+        void pumpSend(const std::vector<GameMessage>& outMessages)
         {
             for (const auto& outMsg : outMessages)
             {
@@ -44,7 +43,7 @@ class GameClient
             }
         }
 
-        std::vector<GameMessage> recvMessagesFromServer()
+        std::vector<GameMessage> pumpReceive()
         {
             std::vector<GameMessage> inMessages;
             GameMessage inMsg;

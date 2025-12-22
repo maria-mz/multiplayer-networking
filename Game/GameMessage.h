@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../Player.h"
-#include "../Input.h"
+#include "Player.h"
 
 
 enum class GameMessageType : uint8_t
@@ -24,8 +23,8 @@ struct PlayerStateUpdate
     float posY;
     float velX;
     float velY;
-    InputEvent inputEvent;
     Direction direction;
+    PlayerState state;
     uint playerID;
 };
 

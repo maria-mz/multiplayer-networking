@@ -1,24 +1,32 @@
 #ifndef PLAYER_H_
 #define PLAYER_H_
 
-#include <map>
+#include <unordered_map>
+#include <cassert>
 
 #include "SDL2/SDL.h"
 
-#include "Constants.h"
-#include "Input.h"
-#include "Utils/Vector2D.h"
+#include "../Constants.h"
+#include "../utils/Vector2D.h"
+
+#include "Event.h"
 
 class InputManager
 {
     public:
+        enum class Action {
+            MoveLeft,
+            MoveRight,
+        };
+
+    public:
         InputManager();
 
-        void input(InputEvent inputEvent);
-        bool isKeyPressed(Input action);
+        void input(GameEvent inputEvent);
+        bool isKeyPressed(Action action);
 
     private:
-        std::unordered_map<Input, bool> m_keyState;
+        std::unordered_map<Action, bool> m_keyState;
 };
 
 class Player;
@@ -36,7 +44,7 @@ class PlayerStateInterface
         virtual ~PlayerStateInterface() = default;
 
         virtual void enter(Player &player) = 0;
-        virtual void input(Player &player, InputEvent inputEvent) = 0;
+        virtual void input(Player &player, GameEvent inputEvent) = 0;
         virtual void update(Player &player, int deltaTime) = 0;
         virtual void exit(Player &player) = 0;
 };
@@ -44,7 +52,7 @@ class PlayerStateInterface
 class PlayerStateIdle : public PlayerStateInterface {
     public:
         void enter(Player &player) override;
-        void input(Player &player, InputEvent inputEvent) override;
+        void input(Player &player, GameEvent inputEvent) override;
         void update(Player &player, int deltaTime) override;
         void exit(Player &player) override;
 };
@@ -52,7 +60,7 @@ class PlayerStateIdle : public PlayerStateInterface {
 class PlayerStateRun : public PlayerStateInterface {
     public:
         void enter(Player &player) override;
-        void input(Player &player, InputEvent inputEvent) override;
+        void input(Player &player, GameEvent inputEvent) override;
         void update(Player &player, int deltaTime) override;
         void exit(Player &player) override;
 };
@@ -79,12 +87,12 @@ class Player
         Player();
         ~Player();
 
-        void input(InputEvent inputEvent);
+        void input(GameEvent inputEvent);
         void update(int deltaTime);
         void render(SDL_Renderer *renderer) const;
 
         PlayerState getState() const;
-        void changeState(PlayerState state);
+        void maybeChangeState(PlayerState state);
 
         void boundPosition();
 
@@ -101,7 +109,7 @@ class Player
         void renderBox(SDL_Renderer *renderer, SDL_Rect box) const;
 
         PlayerState m_currentState;
-        PlayerStateInterface *m_stateObject;
+        std::unique_ptr<PlayerStateInterface> m_stateObject;
 };
 
 #endif

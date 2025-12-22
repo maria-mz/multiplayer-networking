@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Networking/NetServer.h"
-#include "../Networking/NetMessages.h"
+#include "../networking/NetServer.h"
+#include "../networking/NetMessages.h"
 
 #include "GameMessage.h"
 

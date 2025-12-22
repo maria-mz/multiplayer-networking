@@ -4,24 +4,24 @@
 InputManager::InputManager()
 {
     m_keyState = {
-        {Input::MoveLeft, false},
-        {Input::MoveRight, false},
+        {Action::MoveLeft, false},
+        {Action::MoveRight, false},
     };
 }
 
-void InputManager::input(InputEvent inputEvent)
+void InputManager::input(GameEvent inputEvent)
 {
     switch (inputEvent)
     {
-        case InputEvent::MoveLeft_Pressed: m_keyState[Input::MoveLeft] = true; break;
-        case InputEvent::MoveRight_Pressed: m_keyState[Input::MoveRight] = true; break;
-        case InputEvent::MoveLeft_Released: m_keyState[Input::MoveLeft] = false; break;
-        case InputEvent::MoveRight_Released: m_keyState[Input::MoveRight] = false; break;
+        case GameEvent::MoveLeft_Pressed: m_keyState[Action::MoveLeft] = true; break;
+        case GameEvent::MoveRight_Pressed: m_keyState[Action::MoveRight] = true; break;
+        case GameEvent::MoveLeft_Released: m_keyState[Action::MoveLeft] = false; break;
+        case GameEvent::MoveRight_Released: m_keyState[Action::MoveRight] = false; break;
         default: break;
     }
 }
 
-bool InputManager::isKeyPressed(Input action)
+bool InputManager::isKeyPressed(Action action)
 {
     return m_keyState[action];
 }
@@ -31,32 +31,32 @@ void PlayerStateIdle::enter(Player &player)
 
 }
 
-void PlayerStateIdle::input(Player &player, InputEvent inputEvent)
+void PlayerStateIdle::input(Player &player, GameEvent inputEvent)
 {
     switch (inputEvent)
     {
-        case InputEvent::MoveLeft_Pressed:
+        case GameEvent::MoveLeft_Pressed:
             player.m_velocity.x -= player.SPEED;
 
             if (
-                player.m_inputManager.isKeyPressed(Input::MoveLeft) ||
-                player.m_inputManager.isKeyPressed(Input::MoveRight)
+                player.m_inputManager.isKeyPressed(InputManager::Action::MoveLeft) ||
+                player.m_inputManager.isKeyPressed(InputManager::Action::MoveRight)
             )
             {
-                player.changeState(PlayerState::Run);
+                player.maybeChangeState(PlayerState::Run);
             }
 
             break;
 
-        case InputEvent::MoveRight_Pressed:
+        case GameEvent::MoveRight_Pressed:
             player.m_velocity.x += player.SPEED;
 
             if (
-                player.m_inputManager.isKeyPressed(Input::MoveLeft) ||
-                player.m_inputManager.isKeyPressed(Input::MoveRight)
+                player.m_inputManager.isKeyPressed(InputManager::Action::MoveLeft) ||
+                player.m_inputManager.isKeyPressed(InputManager::Action::MoveRight)
             )
             {
-                player.changeState(PlayerState::Run);
+                player.maybeChangeState(PlayerState::Run);
             }
 
             break;
@@ -81,41 +81,41 @@ void PlayerStateRun::enter(Player &player)
 
 }
 
-void PlayerStateRun::input(Player &player, InputEvent inputEvent)
+void PlayerStateRun::input(Player &player, GameEvent inputEvent)
 {
     switch (inputEvent)
     {
-        case InputEvent::MoveLeft_Pressed:
+        case GameEvent::MoveLeft_Pressed:
             player.m_velocity.x -= player.SPEED;
             break;
 
-        case InputEvent::MoveRight_Pressed:
+        case GameEvent::MoveRight_Pressed:
             player.m_velocity.x += player.SPEED;
             break;
 
-        case InputEvent::MoveLeft_Released:
+        case GameEvent::MoveLeft_Released:
             player.m_velocity.x += player.SPEED;
 
             if (
-                !player.m_inputManager.isKeyPressed(Input::MoveLeft) &&
-                !player.m_inputManager.isKeyPressed(Input::MoveRight)
+                !player.m_inputManager.isKeyPressed(InputManager::Action::MoveLeft) &&
+                !player.m_inputManager.isKeyPressed(InputManager::Action::MoveRight)
             )
             {
-                player.changeState(PlayerState::Idle);
+                player.maybeChangeState(PlayerState::Idle);
                 player.m_direction = Direction::Left;
             }
 
             break;
 
-        case InputEvent::MoveRight_Released:
+        case GameEvent::MoveRight_Released:
             player.m_velocity.x -= player.SPEED;
 
             if (
-                !player.m_inputManager.isKeyPressed(Input::MoveLeft) &&
-                !player.m_inputManager.isKeyPressed(Input::MoveRight)
+                !player.m_inputManager.isKeyPressed(InputManager::Action::MoveLeft) &&
+                !player.m_inputManager.isKeyPressed(InputManager::Action::MoveRight)
             )
             {
-                player.changeState(PlayerState::Idle);
+                player.maybeChangeState(PlayerState::Idle);
                 player.m_direction = Direction::Right;
             }
 
@@ -146,7 +146,7 @@ void PlayerStateRun::exit(Player &player)
 }
 
 Player::Player()
-    : m_stateObject(new PlayerStateIdle()),
+    : m_stateObject(std::make_unique<PlayerStateIdle>()),
       m_transform{32, 32, 1},
       m_position{0, 0}
 {
@@ -156,13 +156,12 @@ Player::Player()
 Player::~Player()
 {
     m_stateObject->exit(*this);
-
-    delete m_stateObject;
 }
 
-void Player::input(InputEvent inputEvent)
+void Player::input(GameEvent inputEvent)
 {
     m_inputManager.input(inputEvent);
+    assert(m_stateObject);
     m_stateObject->input(*this, inputEvent);
 }
 
@@ -198,18 +197,22 @@ SDL_Rect Player::getBoundingBox() const
     return rect;
 }
 
-void Player::changeState(PlayerState state)
+void Player::maybeChangeState(PlayerState state)
 {
+    if (m_currentState == state)
+    {
+        return;
+    }
+
     m_stateObject->exit(*this);
-    delete m_stateObject;
 
     switch (state)
     {
         case PlayerState::Idle:
-            m_stateObject = new PlayerStateIdle();
+            m_stateObject = std::make_unique<PlayerStateIdle>();
             break;
         case PlayerState::Run:
-            m_stateObject = new PlayerStateRun();
+            m_stateObject = std::make_unique<PlayerStateRun>();
             break;
     }
 
