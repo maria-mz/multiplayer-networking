@@ -10,5 +10,5 @@ namespace Constants
     constexpr int WINDOW_HEIGHT = 480;
 
     // Assets
-    const std::string FILE_FONT_MAIN = std::string(ASSETS_DIR) + "/FFFFORWA.TTF";
+    const std::string FILE_FONT_MAIN = std::string(ASSETS_DIR) + "/NotoSans.ttf";
 }

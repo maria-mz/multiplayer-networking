@@ -1,11 +1,13 @@
 #pragma once
 
 #include <cassert>
+#include <format>
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 
 #include "../common/Logging.h"
+#include "../ui/Text.h"
 #include "Player.h"
 #include "FontManager.h"
 
@@ -48,6 +50,12 @@ class RenderSystem
                 }
             }
 
+            m_playerLabelAttributes.font = m_fontManager.getFont(
+                Constants::FILE_FONT_MAIN.c_str(), 12
+            );
+            m_playerLabelAttributes.color = {0, 0, 0, 255};
+            m_playerLabelAttributes.outlinePx = 0;
+
             return success;
         }
 
@@ -60,7 +68,7 @@ class RenderSystem
 
             for (auto& [id, player] : gameSimulation.getPlayers())
             {
-                renderPlayer(*player);
+                renderPlayer(*player, id);
             }
 
             SDL_RenderPresent(m_renderer);
@@ -144,18 +152,63 @@ class RenderSystem
             return success;
         }
 
-        void renderPlayer(Player& player)
+        void renderPlayer(Player& player, PlayerID playerID)
         {
             assert(m_renderer != nullptr);
 
-            SDL_SetRenderDrawColor(m_renderer, 0, 0, 255, 255); // Blue
+            std::string idText = std::format("ID: {}", playerID);
+            std::string positionText = std::format(
+                "({}, {})",
+                static_cast<int>(player.m_position.x),
+                static_cast<int>(player.m_position.y)
+            );
 
+            Text idLabel = Text(m_playerLabelAttributes, idText, m_renderer);
+            Text positionLabel = Text(m_playerLabelAttributes, positionText, m_renderer);
+
+            // Draw player
             SDL_Rect box = player.getBoundingBox();
+
+            // Draw fill
+            SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(m_renderer, 0, 0, 255, 64);
+            SDL_RenderFillRect(m_renderer, &box);
+
+            // Draw border
+            SDL_SetRenderDrawColor(m_renderer, 0, 0, 150, 255);
             SDL_RenderDrawRect(m_renderer, &box);
+            SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_NONE);
+
+            // Draw label
+            int centerX = box.x + box.w / 2;
+
+            int idX = centerX - idLabel.getWidth() / 2;
+            int posX = centerX - positionLabel.getWidth() / 2;
+
+            int topY = box.y - positionLabel.getHeight() - idLabel.getHeight();
+            bool drawAbove = topY >= 0;
+
+            int idY, posY;
+
+            if (drawAbove)
+            {
+                posY = box.y - positionLabel.getHeight();
+                idY  = posY - idLabel.getHeight();
+            }
+            else
+            {
+                idY  = box.y + box.h;
+                posY = idY + idLabel.getHeight();
+            }
+
+            idLabel.render(idX, idY, m_renderer);
+            positionLabel.render(posX, posY, m_renderer);
         }
 
     private:
         SDL_Window *m_window;
         SDL_Renderer *m_renderer;
         FontManager m_fontManager;
+
+        TextAttributes m_playerLabelAttributes;
 };
