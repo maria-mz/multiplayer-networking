@@ -12,3 +12,4 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 add_compile_definitions(ASSETS_DIR="${CMAKE_SOURCE_DIR}/assets")
 
 add_subdirectory(src)
+add_subdirectory(tests)

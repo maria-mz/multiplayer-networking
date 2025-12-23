@@ -2,6 +2,8 @@
 #define NET_MESSAGES_H_
 
 #include <vector>
+#include <iostream>
+
 // Forward declare NetConnection, let it access NetMessage body to use as buffer
 class NetConnection;
 
@@ -13,6 +15,17 @@ enum class NetMessageType : u_int32_t
     Disconnect,
     Data
 };
+
+inline std::ostream& operator<<(std::ostream& os, NetMessageType type) {
+    switch (type) {
+        case NetMessageType::ConnectOk:         return os << "ConnectOk";
+        case NetMessageType::ConnectDenied:     return os << "ConnectDenied";
+        case NetMessageType::Disconnect:        return os << "Disconnect";
+        case NetMessageType::Data:              return os << "Data";
+
+        default:                                return os << "Unknown";
+    }
+}
 
 struct NetMessageHeader
 {

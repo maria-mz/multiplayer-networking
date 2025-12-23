@@ -1,17 +1,6 @@
 #include "NetConnection.h"
 #include <iostream>
 
-// std::ostream& operator<<(std::ostream& os, NetMessageType type) {
-//     switch (type) {
-//         case NetMessageType::ConnectOk:         return os << "ConnectOk";
-//         case NetMessageType::ConnectDenied:     return os << "ConnectDenied";
-//         case NetMessageType::Disconnect:        return os << "Disconnect";
-//         case NetMessageType::Data:              return os << "Data";
-
-//         default:                                return os << "Unknown";
-//     }
-// }
-
 std::shared_ptr<NetConnection> NetConnection::create(asio::io_context &io_context)
 {
     return std::shared_ptr<NetConnection>(new NetConnection(io_context));

@@ -1,0 +1,17 @@
+#include <gtest/gtest.h>
+
+#include "../common/TSQueue.h"
+
+
+TEST(TSQueueTest, BasicFIFO)
+{
+    TSQueue<int> tsQueue;
+
+    tsQueue.push(1);
+    tsQueue.push(2);
+    tsQueue.push(3);
+
+    ASSERT_EQ(tsQueue.pop(), 1);
+    ASSERT_EQ(tsQueue.pop(), 2);
+    ASSERT_EQ(tsQueue.pop(), 3);
+}
