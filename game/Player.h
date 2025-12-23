@@ -16,6 +16,8 @@ class InputManager
         enum class Action {
             MoveLeft,
             MoveRight,
+            MoveUp,
+            MoveDown,
         };
 
     public:
@@ -71,12 +73,6 @@ struct Transform
     float scale;
 };
 
-enum class Direction
-{
-    Left,
-    Right,
-};
-
 class Player
 {
     public:
@@ -97,7 +93,6 @@ class Player
         Vector2D<float> m_position;
         Vector2D<float> m_velocity;
         Transform m_transform;
-        Direction m_direction;
 
         InputManager m_inputManager;
 

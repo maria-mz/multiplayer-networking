@@ -6,6 +6,8 @@ InputManager::InputManager()
     m_keyState = {
         {Action::MoveLeft, false},
         {Action::MoveRight, false},
+        {Action::MoveUp, false},
+        {Action::MoveDown, false},
     };
 }
 
@@ -14,9 +16,13 @@ void InputManager::input(GameEvent inputEvent)
     switch (inputEvent)
     {
         case GameEvent::MoveLeft_Pressed: m_keyState[Action::MoveLeft] = true; break;
-        case GameEvent::MoveRight_Pressed: m_keyState[Action::MoveRight] = true; break;
         case GameEvent::MoveLeft_Released: m_keyState[Action::MoveLeft] = false; break;
+        case GameEvent::MoveRight_Pressed: m_keyState[Action::MoveRight] = true; break;
         case GameEvent::MoveRight_Released: m_keyState[Action::MoveRight] = false; break;
+        case GameEvent::MoveUp_Pressed: m_keyState[Action::MoveUp] = true; break;
+        case GameEvent::MoveUp_Released: m_keyState[Action::MoveUp] = false; break;
+        case GameEvent::MoveDown_Pressed: m_keyState[Action::MoveDown] = true; break;
+        case GameEvent::MoveDown_Released: m_keyState[Action::MoveDown] = false; break;
         default: break;
     }
 }
@@ -33,36 +39,14 @@ void PlayerStateIdle::enter(Player &player)
 
 void PlayerStateIdle::input(Player &player, GameEvent inputEvent)
 {
-    switch (inputEvent)
+    if (
+        player.m_inputManager.isKeyPressed(InputManager::Action::MoveLeft) ||
+        player.m_inputManager.isKeyPressed(InputManager::Action::MoveRight) ||
+        player.m_inputManager.isKeyPressed(InputManager::Action::MoveUp) ||
+        player.m_inputManager.isKeyPressed(InputManager::Action::MoveDown)
+    )
     {
-        case GameEvent::MoveLeft_Pressed:
-            player.m_velocity.x -= player.SPEED;
-
-            if (
-                player.m_inputManager.isKeyPressed(InputManager::Action::MoveLeft) ||
-                player.m_inputManager.isKeyPressed(InputManager::Action::MoveRight)
-            )
-            {
-                player.maybeChangeState(PlayerState::Run);
-            }
-
-            break;
-
-        case GameEvent::MoveRight_Pressed:
-            player.m_velocity.x += player.SPEED;
-
-            if (
-                player.m_inputManager.isKeyPressed(InputManager::Action::MoveLeft) ||
-                player.m_inputManager.isKeyPressed(InputManager::Action::MoveRight)
-            )
-            {
-                player.maybeChangeState(PlayerState::Run);
-            }
-
-            break;
-
-        default:
-            break;
+        player.maybeChangeState(PlayerState::Run);
     }
 }
 
@@ -83,61 +67,47 @@ void PlayerStateRun::enter(Player &player)
 
 void PlayerStateRun::input(Player &player, GameEvent inputEvent)
 {
-    switch (inputEvent)
+    if (
+        !player.m_inputManager.isKeyPressed(InputManager::Action::MoveLeft) &&
+        !player.m_inputManager.isKeyPressed(InputManager::Action::MoveRight) &&
+        !player.m_inputManager.isKeyPressed(InputManager::Action::MoveUp) &&
+        !player.m_inputManager.isKeyPressed(InputManager::Action::MoveDown)
+    )
     {
-        case GameEvent::MoveLeft_Pressed:
-            player.m_velocity.x -= player.SPEED;
-            break;
-
-        case GameEvent::MoveRight_Pressed:
-            player.m_velocity.x += player.SPEED;
-            break;
-
-        case GameEvent::MoveLeft_Released:
-            player.m_velocity.x += player.SPEED;
-
-            if (
-                !player.m_inputManager.isKeyPressed(InputManager::Action::MoveLeft) &&
-                !player.m_inputManager.isKeyPressed(InputManager::Action::MoveRight)
-            )
-            {
-                player.maybeChangeState(PlayerState::Idle);
-                player.m_direction = Direction::Left;
-            }
-
-            break;
-
-        case GameEvent::MoveRight_Released:
-            player.m_velocity.x -= player.SPEED;
-
-            if (
-                !player.m_inputManager.isKeyPressed(InputManager::Action::MoveLeft) &&
-                !player.m_inputManager.isKeyPressed(InputManager::Action::MoveRight)
-            )
-            {
-                player.maybeChangeState(PlayerState::Idle);
-                player.m_direction = Direction::Right;
-            }
-
-            break;
-
-        default:
-            break;
+        player.maybeChangeState(PlayerState::Idle);
     }
 }
 
 void PlayerStateRun::update(Player &player, int deltaTime)
 {
-    player.m_position.x += deltaTime * player.m_velocity.x;
+    Vector2D dir{0.0f, 0.0f};
 
-    if (player.m_velocity.x > 0)
+    bool isMovingLeft = player.m_inputManager.isKeyPressed(InputManager::Action::MoveLeft);
+    bool isMovingRight = player.m_inputManager.isKeyPressed(InputManager::Action::MoveRight);
+    bool isMovingUp = player.m_inputManager.isKeyPressed(InputManager::Action::MoveUp);
+    bool isMovingDown = player.m_inputManager.isKeyPressed(InputManager::Action::MoveDown);
+
+    if (isMovingLeft)
+        dir.x -= 1.0f;
+    if (isMovingRight)
+        dir.x += 1.0f;
+    if (isMovingUp)
+        dir.y -= 1.0f;
+    if (isMovingDown)
+        dir.y += 1.0f;
+
+    if (dir.x != 0.0f || dir.y != 0.0f)
     {
-        player.m_direction = Direction::Right;
+        // Normalize direction to prevent faster diagonal movement
+        float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+        dir.x /= len;
+        dir.y /= len;
     }
-    else
-    {
-        player.m_direction = Direction::Left;
-    }
+
+    player.m_velocity.x = dir.x * player.SPEED;
+    player.m_velocity.y = dir.y * player.SPEED;
+    player.m_position.x += player.m_velocity.x * deltaTime;
+    player.m_position.y += player.m_velocity.y * deltaTime;
 }
 
 void PlayerStateRun::exit(Player &player)
@@ -213,6 +183,7 @@ void Player::boundPosition()
 {
     SDL_Rect boundingBox = getBoundingBox();
 
+    // Bound x
     if (boundingBox.x < 0)
     {
         m_position.x = 0;
@@ -220,5 +191,15 @@ void Player::boundPosition()
     else if (boundingBox.x + boundingBox.w > Constants::WINDOW_WIDTH)
     {
         m_position.x = Constants::WINDOW_WIDTH - boundingBox.w;
+    }
+
+    // Bound y
+    if (boundingBox.y < 0)
+    {
+        m_position.y = 0;
+    }
+    else if (boundingBox.y + boundingBox.h > Constants::WINDOW_HEIGHT)
+    {
+        m_position.y = Constants::WINDOW_HEIGHT - boundingBox.h;
     }
 }

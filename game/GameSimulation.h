@@ -116,7 +116,6 @@ class GameSimulation
                 .posY = localPlayer->m_position.y,
                 .velX = localPlayer->m_velocity.x,
                 .velY = localPlayer->m_velocity.y,
-                .direction = localPlayer->m_direction,
                 .state = localPlayer->getState(),
                 .playerID = *m_localPlayerID
             };
@@ -156,7 +155,6 @@ class GameSimulation
             std::unique_ptr<Player>& remotePlayer = m_players.at(playerID);
 
             remotePlayer->maybeChangeState(stateUpdate.state);
-            remotePlayer->m_direction = stateUpdate.direction;
             remotePlayer->m_position.x = stateUpdate.posX;
             remotePlayer->m_position.y = stateUpdate.posY;
             remotePlayer->m_velocity.x = stateUpdate.velX;

@@ -23,7 +23,6 @@ struct PlayerStateUpdate
     float posY;
     float velX;
     float velY;
-    Direction direction;
     PlayerState state;
     uint playerID;
 };
