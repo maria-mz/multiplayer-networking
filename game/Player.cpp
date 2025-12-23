@@ -112,7 +112,8 @@ void PlayerStateRun::update(Player &player, int deltaTime)
 
 void PlayerStateRun::exit(Player &player)
 {
-
+    player.m_velocity.x = 0;
+    player.m_velocity.y = 0;
 }
 
 Player::Player()

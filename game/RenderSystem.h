@@ -158,9 +158,9 @@ class RenderSystem
 
             std::string idText = std::format("ID: {}", playerID);
             std::string positionText = std::format(
-                "({}, {})",
-                static_cast<int>(player.m_position.x),
-                static_cast<int>(player.m_position.y)
+                "({:.0f}, {:.0f})",
+                player.m_position.x,
+                player.m_position.y
             );
 
             Text idLabel = Text(m_playerLabelAttributes, idText, m_renderer);
