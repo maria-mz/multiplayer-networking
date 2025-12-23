@@ -1,5 +1,4 @@
-#ifndef NET_MESSAGES_H_
-#define NET_MESSAGES_H_
+#pragma once
 
 #include <vector>
 #include <iostream>
@@ -81,5 +80,3 @@ struct NetMessage
 
         friend class NetConnection;
 };
-
-#endif

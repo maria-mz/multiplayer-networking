@@ -1,5 +1,4 @@
-#ifndef PLAYER_H_
-#define PLAYER_H_
+#pragma once
 
 #include <unordered_map>
 #include <cassert>
@@ -106,5 +105,3 @@ class Player
         PlayerState m_currentState;
         std::unique_ptr<PlayerStateInterface> m_stateObject;
 };
-
-#endif

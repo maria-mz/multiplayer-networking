@@ -1,5 +1,4 @@
-#ifndef NET_SERVER_H_
-#define NET_SERVER_H_
+#pragma once
 
 #include <asio.hpp>
 #include <unordered_map>
@@ -57,5 +56,3 @@ class NetServer
         std::function<void(ClientID)> m_onClientConnect = nullptr;
         std::function<void(ClientID)> m_onClientDisconnect = nullptr;
 };
-
-#endif

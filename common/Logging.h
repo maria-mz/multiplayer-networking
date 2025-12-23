@@ -1,5 +1,4 @@
-#ifndef LOGGING_H_
-#define LOGGING_H_
+#pragma once
 
 #define COLOR_RESET   "\x1b[0m"
 #define COLOR_BLUE    "\x1b[34m"
@@ -42,6 +41,4 @@
     printf(COLOR_RED "ERROR - %s:%d - " fmt COLOR_RESET "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define LOG_ERROR(fmt, ...) ((void)0)
-#endif
-
 #endif

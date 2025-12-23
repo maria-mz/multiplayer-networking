@@ -1,5 +1,4 @@
-#ifndef CONSTANTS_H_
-#define CONSTANTS_H_
+#pragma once
 
 #include <string>
 
@@ -13,5 +12,3 @@ namespace Constants
     // Assets
     const std::string FILE_FONT_MAIN = std::string(ASSETS_DIR) + "/FFFFORWA.TTF";
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef FONT_MANAGER_H_
-#define FONT_MANAGER_H_
+#pragma once
 
 #include <map>
 
@@ -20,5 +19,3 @@ class FontManager
     private:
         std::map<std::pair<const char*, int>, TTF_Font*> m_fonts;
 };
-
-#endif

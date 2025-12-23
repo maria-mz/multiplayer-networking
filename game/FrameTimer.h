@@ -1,5 +1,4 @@
-#ifndef FRAME_TIMER_H_
-#define FRAME_TIMER_H_
+#pragma once
 
 #include <SDL2/SDL.h>
 
@@ -32,5 +31,3 @@ class FrameTimer {
         int m_startTick;
         int m_deltaTime;
 };
-
-#endif

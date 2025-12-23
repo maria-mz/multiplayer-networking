@@ -1,5 +1,4 @@
-#ifndef NET_CONNECTION_H_
-#define NET_CONNECTION_H_
+#pragma once
 
 #include <functional>
 #include <memory>
@@ -45,5 +44,3 @@ class NetConnection : public std::enable_shared_from_this<NetConnection>
 
         asio::io_context &m_ioContext;
 };
-
-#endif

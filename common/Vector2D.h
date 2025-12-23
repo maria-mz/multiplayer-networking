@@ -1,5 +1,4 @@
-#ifndef VECTOR_H_
-#define VECTOR_H_
+#pragma once
 
 template<typename T>
 class Vector2D
@@ -11,5 +10,3 @@ class Vector2D
         T x;
         T y;
 };
-
-#endif

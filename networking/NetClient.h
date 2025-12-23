@@ -1,5 +1,4 @@
-#ifndef NET_CLIENT_H_
-#define NET_CLIENT_H_
+#pragma once
 
 #include <mutex>
 #include <thread>
@@ -29,5 +28,3 @@ class NetClient
 
         std::shared_ptr<NetConnection> m_connection;
 };
-
-#endif

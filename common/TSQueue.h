@@ -1,5 +1,4 @@
-#ifndef TS_QUEUE_H_
-#define TS_QUEUE_H_
+#pragma once
 
 #include <deque>
 
@@ -66,5 +65,3 @@ class TSQueue
         std::mutex m_mtx;
         std::condition_variable m_cv;
 };
-
-#endif

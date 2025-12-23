@@ -1,5 +1,4 @@
-#ifndef TEXTURE_MANAGER_H_
-#define TEXTURE_MANAGER_H_
+#pragma once
 
 #include <map>
 
@@ -20,5 +19,3 @@ class TextureManager
     private:
         std::map<const char*, SDL_Texture*> m_textures;
 };
-
-#endif
