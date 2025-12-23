@@ -5,7 +5,7 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 
-#include "../Logging.h"
+#include "../common/Logging.h"
 #include "Player.h"
 #include "FontManager.h"
 
@@ -133,9 +133,9 @@ class RenderSystem
             bool success = true;
 
             if (
-                !m_fontManager.loadFont(Constants::FILE_FONT_MAIN, 8) ||
-                !m_fontManager.loadFont(Constants::FILE_FONT_MAIN, 12) ||
-                !m_fontManager.loadFont(Constants::FILE_FONT_MAIN, 18)
+                !m_fontManager.loadFont(Constants::FILE_FONT_MAIN.c_str(), 8) ||
+                !m_fontManager.loadFont(Constants::FILE_FONT_MAIN.c_str(), 12) ||
+                !m_fontManager.loadFont(Constants::FILE_FONT_MAIN.c_str(), 18)
             )
             {
                 success = false;

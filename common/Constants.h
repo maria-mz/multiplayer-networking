@@ -1,6 +1,8 @@
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
+#include <string>
+
 namespace Constants
 {
     // Window
@@ -9,8 +11,7 @@ namespace Constants
     constexpr int WINDOW_HEIGHT = 480;
 
     // Assets
-    constexpr const char* FILE_CURSOR = "assets/cursor.png";
-    constexpr const char* FILE_FONT_MAIN = "assets/FFFFORWA.TTF";
+    const std::string FILE_FONT_MAIN = std::string(ASSETS_DIR) + "/FFFFORWA.TTF";
 }
 
 #endif

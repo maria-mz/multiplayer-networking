@@ -6,7 +6,7 @@
 #include <set>
 #include <mutex>
 
-#include "../Logging.h"
+#include "../common/Logging.h"
 #include "NetConnection.h"
 #include "NetMessages.h"
 

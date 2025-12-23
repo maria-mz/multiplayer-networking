@@ -7,8 +7,8 @@
 
 #include <asio.hpp>
 
-#include "../Logging.h"
-#include "../utils/TSQueue.h"
+#include "../common/Logging.h"
+#include "../common/TSQueue.h"
 #include "NetMessages.h"
 
 

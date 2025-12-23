@@ -6,7 +6,7 @@
 #include "RenderSystem.h"
 #include "InputSystem.h"
 #include "FrameTimer.h"
-#include "../utils/Utils.h"
+#include "../common/Utils.h"
 
 class App
 {

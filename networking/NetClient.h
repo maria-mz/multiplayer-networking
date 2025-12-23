@@ -6,7 +6,7 @@
 
 #include <asio.hpp>
 
-#include "../Logging.h"
+#include "../common/Logging.h"
 #include "NetConnection.h"
 #include "NetMessages.h"
 
