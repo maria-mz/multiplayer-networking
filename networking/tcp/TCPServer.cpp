@@ -1,15 +1,15 @@
-#include "NetServer.h"
+#include "TCPServer.h"
 
 
-NetServer::~NetServer()
+TCPServer::~TCPServer()
 {
     shutdown();
 }
 
 
-void NetServer::accept()
+void TCPServer::accept()
 {
-    std::shared_ptr<NetConnection> newClient = NetConnection::create(m_ioContext);
+    std::shared_ptr<TCPConnection> newClient = TCPConnection::create(m_ioContext);
 
     m_acceptor.async_accept(
         newClient->m_socket,
@@ -25,7 +25,7 @@ void NetServer::accept()
 
                 newClient->startReadLoop();
 
-                NetMessage msg{NetMessageType::ConnectOk, ConnectOkBody{clientID}};
+                TCPMessage msg{TCPMessageType::ConnectOk, ConnectOkBody{clientID}};
                 newClient->send(msg);
 
                 if (m_onClientConnect)
@@ -40,15 +40,15 @@ void NetServer::accept()
 }
 
 
-ClientID NetServer::getNewClientID()
+ClientID TCPServer::getNewClientID()
 {
     return m_nextNewClientID++;
 }
 
 
-void NetServer::disconnectClient(ClientID clientID)
+void TCPServer::disconnectClient(ClientID clientID)
 {
-    std::shared_ptr<NetConnection> client = getClient(clientID);
+    std::shared_ptr<TCPConnection> client = getClient(clientID);
 
     if (client)
     {
@@ -74,14 +74,14 @@ void NetServer::disconnectClient(ClientID clientID)
 }
 
 
-void NetServer::removeClient(ClientID clientID)
+void TCPServer::removeClient(ClientID clientID)
 {
     disconnectClient(clientID);
     m_clients.erase(clientID);
 }
 
 
-void NetServer::start()
+void TCPServer::start()
 {
     accept();
     m_contextThread = std::thread(
@@ -102,7 +102,7 @@ void NetServer::start()
 }
 
 
-void NetServer::shutdown()
+void TCPServer::shutdown()
 {
     m_ioContext.stop();
 
@@ -127,11 +127,11 @@ void NetServer::shutdown()
 }
 
 
-bool NetServer::send(ClientID clientID, NetMessage &msg)
+bool TCPServer::send(ClientID clientID, TCPMessage &msg)
 {
     bool ok = false;
 
-    std::shared_ptr<NetConnection> client = getClient(clientID);
+    std::shared_ptr<TCPConnection> client = getClient(clientID);
 
     if (client)
     {
@@ -143,7 +143,7 @@ bool NetServer::send(ClientID clientID, NetMessage &msg)
 }
 
 
-void NetServer::broadcast(NetMessage &msg, std::optional<ClientID> ignoreClientID)
+void TCPServer::broadcast(TCPMessage &msg, std::optional<ClientID> ignoreClientID)
 {
     for (auto &pair : m_clients)
     {
@@ -155,18 +155,18 @@ void NetServer::broadcast(NetMessage &msg, std::optional<ClientID> ignoreClientI
 }
 
 
-bool NetServer::recv(ClientID clientID, NetMessage &msg)
+bool TCPServer::recv(ClientID clientID, TCPMessage &msg)
 {
     bool ok = false;
 
-    std::shared_ptr<NetConnection> client = getClient(clientID);
+    std::shared_ptr<TCPConnection> client = getClient(clientID);
 
     if (client)
     {
         ok = client->recv(msg);
     }
 
-    if (msg.header.type == NetMessageType::Disconnect)
+    if (msg.header.type == TCPMessageType::Disconnect)
     {
         removeClient(clientID);
     }
@@ -175,18 +175,18 @@ bool NetServer::recv(ClientID clientID, NetMessage &msg)
 }
 
 
-bool NetServer::blockingRecv(ClientID clientID, NetMessage &msg)
+bool TCPServer::blockingRecv(ClientID clientID, TCPMessage &msg)
 {
     bool ok = false;
 
-    std::shared_ptr<NetConnection> client = getClient(clientID);
+    std::shared_ptr<TCPConnection> client = getClient(clientID);
 
     if (client)
     {
         ok = client->blockingRecv(msg);
     }
 
-    if (msg.header.type == NetMessageType::Disconnect)
+    if (msg.header.type == TCPMessageType::Disconnect)
     {
         removeClient(clientID);
     }
@@ -195,7 +195,7 @@ bool NetServer::blockingRecv(ClientID clientID, NetMessage &msg)
 }
 
 
-std::shared_ptr<NetConnection> NetServer::getClient(ClientID clientID)
+std::shared_ptr<TCPConnection> TCPServer::getClient(ClientID clientID)
 {
     auto it = m_clients.find(clientID);
 
@@ -208,7 +208,7 @@ std::shared_ptr<NetConnection> NetServer::getClient(ClientID clientID)
 }
 
 
-std::vector<ClientID> NetServer::getClientIDs()
+std::vector<ClientID> TCPServer::getClientIDs()
 {
     std::vector<ClientID> ids;
     ids.reserve(m_clients.size());
@@ -221,9 +221,9 @@ std::vector<ClientID> NetServer::getClientIDs()
 }
 
 
-bool NetServer::isClientConnected(ClientID clientID)
+bool TCPServer::isClientConnected(ClientID clientID)
 {
-    std::shared_ptr<NetConnection> client = getClient(clientID);
+    std::shared_ptr<TCPConnection> client = getClient(clientID);
 
     if (client && client->m_socket.is_open())
     {

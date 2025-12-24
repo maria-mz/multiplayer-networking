@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../networking/NetServer.h"
-#include "../networking/NetMessages.h"
+#include "../networking/tcp/TCPServer.h"
+#include "../networking/tcp/TCPMessage.h"
 
 #include "GameMessage.h"
 
@@ -11,36 +11,40 @@ class GameServer
     public:
         GameServer(int port)
         {
-            m_netServer = std::make_unique<NetServer>(port);
+            m_tcpServer = std::make_unique<TCPServer>(port);
 
-            m_netServer->setOnClientConnect([this](ClientID clientID) {
+            m_tcpServer->setOnClientConnect([this](ClientID clientID) {
                 onClientConnected(clientID);
             });
-            m_netServer->setOnClientDisconnect([this](ClientID clientID) {
+            m_tcpServer->setOnClientDisconnect([this](ClientID clientID) {
                 onClientDisconnected(clientID);
             });
         }
 
         ~GameServer()
         {
-            m_netServer->shutdown();
+            m_tcpServer->shutdown();
         }
 
         void start()
         {
-            m_netServer->start();
+            m_tcpServer->start();
         }
 
         void shutdown()
         {
-            m_netServer->shutdown();
+            m_tcpServer->shutdown();
         }
 
         void pump()
         {
             // Relay PlayerState updates from one player to every player,
             // for all players.
-            for (const auto& clientID : m_netServer->getClientIDs())
+            //
+            // Take a snapshot of the clientIDs. Seems to prevent seg faults.
+            // TODO: Investigate
+            auto clientIDsSnapshot = m_tcpServer->getClientIDs();
+            for (const auto& clientID : clientIDsSnapshot)
             {
                 GameMessage gameMsg;
 
@@ -95,22 +99,22 @@ class GameServer
 
         void sendMessage(ClientID clientID, GameMessage msg)
         {
-            NetMessage netMsg{NetMessageType::Data, msg};
-            m_netServer->send(clientID, netMsg);
+            TCPMessage netMsg{TCPMessageType::Data, msg};
+            m_tcpServer->send(clientID, netMsg);
         }
 
         void broadcastMessage(GameMessage msg, std::optional<ClientID> ignoreClientID)
         {
-            NetMessage netMsg{NetMessageType::Data, msg};
-            m_netServer->broadcast(netMsg, ignoreClientID);
+            TCPMessage netMsg{TCPMessageType::Data, msg};
+            m_tcpServer->broadcast(netMsg, ignoreClientID);
         }
 
         bool recieveMessage(ClientID clientID, GameMessage& msg)
         {
-            NetMessage netMsg;
-            bool ok = m_netServer->recv(clientID, netMsg);
+            TCPMessage netMsg;
+            bool ok = m_tcpServer->recv(clientID, netMsg);
 
-            if (!ok || netMsg.header.type != NetMessageType::Data)
+            if (!ok || netMsg.header.type != TCPMessageType::Data)
             {
                 return false;
             }
@@ -119,5 +123,5 @@ class GameServer
             return true;
         }
 
-        std::unique_ptr<NetServer> m_netServer;
+        std::unique_ptr<TCPServer> m_tcpServer;
 };

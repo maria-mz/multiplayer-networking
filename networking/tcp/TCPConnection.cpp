@@ -1,19 +1,19 @@
-#include "NetConnection.h"
+#include "TCPConnection.h"
 #include <iostream>
 
-std::shared_ptr<NetConnection> NetConnection::create(asio::io_context &io_context)
+std::shared_ptr<TCPConnection> TCPConnection::create(asio::io_context &io_context)
 {
-    return std::shared_ptr<NetConnection>(new NetConnection(io_context));
+    return std::shared_ptr<TCPConnection>(new TCPConnection(io_context));
 }
 
 
-void NetConnection::readHeader()
+void TCPConnection::readHeader()
 {
-    m_currentMsgIn = NetMessage();
+    m_currentMsgIn = TCPMessage();
 
     asio::async_read(
         m_socket,
-        asio::buffer((&m_currentMsgIn.header), sizeof(NetMessageHeader)),
+        asio::buffer((&m_currentMsgIn.header), sizeof(TCPMessageHeader)),
         [this](const std::error_code &ec, size_t length)
         {
             if (!ec)
@@ -34,14 +34,14 @@ void NetConnection::readHeader()
             {
                 LOG_DEBUG("Message read failure");
                 m_socket.close();
-                m_inMessages.push(NetMessage{NetMessageType::Disconnect});
+                m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
             }
         }
     );
 }
 
 
-void NetConnection::readBody()
+void TCPConnection::readBody()
 {
     asio::async_read(
         m_socket,
@@ -59,14 +59,14 @@ void NetConnection::readBody()
             {
                 LOG_DEBUG("Message read failure");
                 m_socket.close();
-                m_inMessages.push(NetMessage{NetMessageType::Disconnect});
+                m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
             }
         }
     );
 }
 
 
-void NetConnection::writeHeader()
+void TCPConnection::writeHeader()
 {
     if (!m_outMessages.front(m_currentMsgOut))
     {
@@ -75,7 +75,7 @@ void NetConnection::writeHeader()
 
     asio::async_write(
         m_socket,
-        asio::buffer(&m_currentMsgOut.header, sizeof(NetMessageHeader)),
+        asio::buffer(&m_currentMsgOut.header, sizeof(TCPMessageHeader)),
         [this](std::error_code ec, std::size_t length)
         {
             if (!ec)
@@ -98,14 +98,14 @@ void NetConnection::writeHeader()
             {
                 LOG_DEBUG("Message write failure");
                 m_socket.close();
-                m_inMessages.push(NetMessage{NetMessageType::Disconnect});
+                m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
             }
         }
     );
 }
 
 
-void NetConnection::writeBody()
+void TCPConnection::writeBody()
 {
     asio::async_write(
         m_socket,
@@ -125,20 +125,20 @@ void NetConnection::writeBody()
             {
                 LOG_DEBUG("Message write failure");
                 m_socket.close();
-                m_inMessages.push(NetMessage{NetMessageType::Disconnect});
+                m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
             }
         }
     );
 }
 
 
-void NetConnection::startReadLoop()
+void TCPConnection::startReadLoop()
 {
     readHeader();
 }
 
 
-void NetConnection::send(NetMessage &msg)
+void TCPConnection::send(TCPMessage &msg)
 {
     // Note: This must run in the thread associated with m_ioContext to preserve
     //       the order of writeHeader -> writeBody calls. Otherwise, it's
@@ -168,7 +168,7 @@ void NetConnection::send(NetMessage &msg)
 }
 
 
-bool NetConnection::recv(NetMessage &msg)
+bool TCPConnection::recv(TCPMessage &msg)
 {
     bool ok = false;
 
@@ -181,7 +181,7 @@ bool NetConnection::recv(NetMessage &msg)
 }
 
 
-bool NetConnection::blockingRecv(NetMessage &msg)
+bool TCPConnection::blockingRecv(TCPMessage &msg)
 {
     // TODO: Add timeout? (In that case, if timeout expires ok = false)
     bool ok = true;

@@ -4,29 +4,20 @@
 #include <thread>
 #include <atomic>
 
-#include "../common/TSQueue.h"
-#include "../common/Logging.h"
+#include "../../common/TSQueue.h"
+#include "../../common/Logging.h"
 
-#include "NetMessages.h"
+#include "UDPPacket.h"
 
-
-class UDPClient
+class UDPServer
 {
     public:
-        UDPClient(std::string serverIP, int serverPort)
-        : m_socket(m_ioContext)
-        {
-            std::error_code ec;
-            auto serverAddress = asio::ip::make_address(serverIP, ec);
-            if (ec)
-            {
-                throw std::invalid_argument("Invalid IP format");
-            }
+        UDPServer(int serverPort)
+        : m_socket(m_ioContext,
+                   asio::ip::udp::endpoint(asio::ip::udp::v4(), serverPort))
+        {}
 
-            m_serverEndpoint = asio::ip::udp::endpoint(serverAddress, serverPort);
-        }
-
-        ~UDPClient()
+        ~UDPServer()
         {
             shutdown();
         }
@@ -35,15 +26,8 @@ class UDPClient
         {
             if (m_running)
             {
-                throw std::runtime_error("Client already started");
+                throw std::runtime_error("Server already started");
             }
-
-            m_socket.open(asio::ip::udp::v4());
-
-            // Bind to any available local port
-            m_socket.bind(
-                asio::ip::udp::endpoint(asio::ip::udp::v4(), 0)
-            );
 
             startRecv();
 
@@ -66,24 +50,26 @@ class UDPClient
             m_running = true;
         }
 
-        void send(UDPPacket pkt)
+        void sendTo(UDPPacket pkt, asio::ip::udp::endpoint receiver)
         {
             asio::post(
                 m_ioContext,
-                [pkt, this]()
+                [pkt, receiver, this]()
                 {
-                    startSend(pkt);
+                    startSend(pkt, receiver);
                 }
             );
         }
 
-        bool recv(UDPPacket& pkt)
+        bool recv(UDPPacket &pkt, asio::ip::udp::endpoint& sender)
         {
             bool ok = false;
 
             if (!m_inPackets.empty())
             {
-                pkt = m_inPackets.pop();
+                auto packetAndSender = m_inPackets.pop();
+                pkt = std::get<0>(packetAndSender);
+                sender = std::get<1>(packetAndSender);
                 ok = true;
             }
             return ok;
@@ -106,39 +92,27 @@ class UDPClient
             }
         }
 
-        // Returns the socket's ephemeral port. Intended to only be used for testing.
-        int getLocalPort() const
-        {
-            std::error_code ec;
-            auto endpoint = m_socket.local_endpoint(ec);
-            if (ec)
-            {
-                throw std::runtime_error("Failed to get local endpoint: " + ec.message());
-            }
-
-            return endpoint.port();
-        }
-
     private:
         void startRecv()
         {
             auto pkt = std::make_shared<UDPPacket>();
+            auto sender = std::make_shared<asio::ip::udp::endpoint>();
 
             m_socket.async_receive_from(
                 asio::buffer(pkt->dataBuffer.bytes.data(), pkt->dataBuffer.bytes.size()),
-                m_serverEndpoint,
-                [this, pkt](const std::error_code& ec, size_t length)
+                *sender,
+                [this, pkt, sender](const std::error_code& ec, size_t length)
                 {
                     if (!m_running)
                     {
-                        // Shutting down, do nothing
+                        // Shutting down - do nothing
                         return;
                     }
 
                     if (!ec)
                     {
                         pkt->dataBuffer.usedSize = length;
-                        m_inPackets.push(*pkt);
+                        m_inPackets.push({*pkt, *sender});
                     }
                     else if (ec == asio::error::operation_aborted)
                     {
@@ -148,7 +122,6 @@ class UDPClient
                     else
                     {
                         LOG_ERROR("Failed to receive packet: %s", ec.message().c_str());
-                        shutdown();
                     }
 
                     // Only restart if still running
@@ -160,12 +133,12 @@ class UDPClient
             );
         }
 
-        void startSend(UDPPacket pkt)
+       void startSend(UDPPacket pkt, asio::ip::udp::endpoint receiver)
         {
             m_socket.async_send_to(
                 asio::buffer(pkt.dataBuffer.bytes.data(), pkt.dataBuffer.usedSize),
-                m_serverEndpoint,
-                [pkt, this](const std::error_code& ec, size_t length)
+                receiver,
+                [this, pkt, receiver](const std::error_code& ec, size_t length)
                 {
                     if (!ec)
                     {
@@ -178,7 +151,10 @@ class UDPClient
                     }
                     else
                     {
-                        LOG_ERROR("Failed to send packet: %s", ec.message().c_str());
+                        LOG_ERROR("Failed to send packet to %s:%u: %s",
+                            receiver.address().to_string().c_str(),
+                            receiver.port(),
+                            ec.message().c_str());
                     }
                 }
             );
@@ -189,9 +165,8 @@ class UDPClient
         std::thread m_contextThread;
 
         asio::ip::udp::socket m_socket;
-        asio::ip::udp::endpoint m_serverEndpoint;
 
-        TSQueue<UDPPacket> m_inPackets;
+        TSQueue<std::pair<UDPPacket, asio::ip::udp::endpoint>> m_inPackets;
 
         std::atomic<bool> m_running{false};
 };

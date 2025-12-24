@@ -2,8 +2,8 @@
 #include <thread>
 #include <chrono>
 
-#include "../networking/UDPServer.h"
-#include "../networking/UDPClient.h"
+#include "../networking/udp/UDPServer.h"
+#include "../networking/udp/UDPClient.h"
 
 // Helper function that waits for a condition or times out
 bool waitFor(std::function<bool()> condition, int timeoutMs = 200)
@@ -111,7 +111,7 @@ TEST(UDPNetworkingTest, CleanShutdown)
 
 TEST(UDPNetworkingTest, ManyMessages)
 {
-    const int numMessages = 1000;
+    const int numMessages = 10000;
     const int serverPort = 8080;
 
     UDPServer server(serverPort);

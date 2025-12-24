@@ -5,26 +5,26 @@
 
 #include <asio.hpp>
 
-#include "../common/Logging.h"
-#include "NetConnection.h"
-#include "NetMessages.h"
+#include "../../common/Logging.h"
+#include "TCPConnection.h"
+#include "TCPMessage.h"
 
-class NetClient
+class TCPClient
 {
     public:
-        ~NetClient();
+        ~TCPClient();
 
         bool connectToServer(std::string ip, std::string port, int timeoutMs = 250);
         bool isConnected();
         void disconnect();
 
-        bool send(NetMessage &msg);
-        bool recv(NetMessage &msg);
-        bool blockingRecv(NetMessage &msg);
+        bool send(TCPMessage &msg);
+        bool recv(TCPMessage &msg);
+        bool blockingRecv(TCPMessage &msg);
 
     private:
         asio::io_context m_ioContext;
         std::thread m_contextThread;
 
-        std::shared_ptr<NetConnection> m_connection;
+        std::shared_ptr<TCPConnection> m_connection;
 };

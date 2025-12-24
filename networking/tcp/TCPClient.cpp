@@ -1,13 +1,13 @@
-#include "NetClient.h"
+#include "TCPClient.h"
 
 
-NetClient::~NetClient()
+TCPClient::~TCPClient()
 {
     disconnect();
 }
 
 
-bool NetClient::connectToServer(std::string ip, std::string port, int timeoutMs)
+bool TCPClient::connectToServer(std::string ip, std::string port, int timeoutMs)
 {
     LOG_INFO("Connecting to server at %s:%s", ip.c_str(), port.c_str());
 
@@ -63,7 +63,7 @@ bool NetClient::connectToServer(std::string ip, std::string port, int timeoutMs)
         return false;
     }
 
-    m_connection = NetConnection::create(m_ioContext);
+    m_connection = TCPConnection::create(m_ioContext);
     m_connection->m_socket = std::move(socket);
     m_connection->startReadLoop();
 
@@ -87,13 +87,13 @@ bool NetClient::connectToServer(std::string ip, std::string port, int timeoutMs)
 }
 
 
-bool NetClient::isConnected()
+bool TCPClient::isConnected()
 {
     return (m_connection && m_connection->m_socket.is_open());
 }
 
 
-void NetClient::disconnect()
+void TCPClient::disconnect()
 {
     if (!m_ioContext.stopped())
     {
@@ -124,7 +124,7 @@ void NetClient::disconnect()
 }
 
 
-bool NetClient::send(NetMessage &msg)
+bool TCPClient::send(TCPMessage &msg)
 {
     bool ok = false;
 
@@ -138,7 +138,7 @@ bool NetClient::send(NetMessage &msg)
 }
 
 
-bool NetClient::recv(NetMessage &msg)
+bool TCPClient::recv(TCPMessage &msg)
 {
     bool ok = false;
 
@@ -151,7 +151,7 @@ bool NetClient::recv(NetMessage &msg)
 }
 
 
-bool NetClient::blockingRecv(NetMessage &msg)
+bool TCPClient::blockingRecv(TCPMessage &msg)
 {
     bool ok = false;
 

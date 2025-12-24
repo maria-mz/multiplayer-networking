@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../networking/NetClient.h"
-#include "../networking/NetMessages.h"
+#include "../networking/tcp/TCPClient.h"
+#include "../networking/tcp/TCPMessage.h"
 
 #include "GameMessage.h"
 
@@ -11,28 +11,28 @@ class GameClient
     public:
         GameClient()
         {
-            m_netClient = std::make_unique<NetClient>();
+            m_tcpClient = std::make_unique<TCPClient>();
         }
 
         ~GameClient()
         {
-            m_netClient->disconnect();
+            m_tcpClient->disconnect();
         }
 
         bool connectToServer(std::string serverIP, int serverPort)
         {
-            bool isConnected = m_netClient->connectToServer(serverIP, std::to_string(serverPort));
+            bool isConnected = m_tcpClient->connectToServer(serverIP, std::to_string(serverPort));
             return isConnected;
         }
 
         bool isConnectedToServer()
         {
-            return m_netClient->isConnected();
+            return m_tcpClient->isConnected();
         }
 
         void disconnect()
         {
-            m_netClient->disconnect();
+            m_tcpClient->disconnect();
         }
 
         void pumpSend(const std::vector<GameMessage>& outMessages)
@@ -59,16 +59,16 @@ class GameClient
     private:
         void sendMessageToServer(GameMessage msg)
         {
-            NetMessage netMsg{NetMessageType::Data, msg};
-            m_netClient->send(netMsg);
+            TCPMessage netMsg{TCPMessageType::Data, msg};
+            m_tcpClient->send(netMsg);
         }
 
         bool recieveMessageFromServer(GameMessage& msg)
         {
-            NetMessage netMsg;
-            bool ok = m_netClient->recv(netMsg);
+            TCPMessage netMsg;
+            bool ok = m_tcpClient->recv(netMsg);
 
-            if (!ok || netMsg.header.type != NetMessageType::Data)
+            if (!ok || netMsg.header.type != TCPMessageType::Data)
             {
                 return false;
             }
@@ -77,5 +77,5 @@ class GameClient
             return true;
         }
 
-        std::unique_ptr<NetClient> m_netClient;
+        std::unique_ptr<TCPClient> m_tcpClient;
 };

@@ -3,9 +3,9 @@ add_library(game_core
     ${CMAKE_SOURCE_DIR}/game/Player.cpp
     ${CMAKE_SOURCE_DIR}/game/TextureManager.cpp
     ${CMAKE_SOURCE_DIR}/game/FontManager.cpp
-    ${CMAKE_SOURCE_DIR}/networking/NetClient.cpp
-    ${CMAKE_SOURCE_DIR}/networking/NetConnection.cpp
-    ${CMAKE_SOURCE_DIR}/networking/NetServer.cpp
+    ${CMAKE_SOURCE_DIR}/networking/tcp/TCPClient.cpp
+    ${CMAKE_SOURCE_DIR}/networking/tcp/TCPConnection.cpp
+    ${CMAKE_SOURCE_DIR}/networking/tcp/TCPServer.cpp
 )
 target_include_directories(game_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/common

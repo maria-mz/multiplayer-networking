@@ -5,30 +5,30 @@
 #include <set>
 #include <mutex>
 
-#include "../common/Logging.h"
-#include "NetConnection.h"
-#include "NetMessages.h"
+#include "../../common/Logging.h"
+#include "TCPConnection.h"
+#include "TCPMessage.h"
 
 
 using ClientID = u_int32_t;
 
 
-class NetServer
+class TCPServer
 {
     public:
-        NetServer(int port)
+        TCPServer(int port)
         : m_acceptor(m_ioContext,
                      // binds to 0.0.0.0:<port>
                      asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {}
-        ~NetServer();
+        ~TCPServer();
 
         void start();
         void shutdown();
 
-        bool send(ClientID clientID, NetMessage &msg);
-        void broadcast(NetMessage &msg, std::optional<ClientID> ignoreClientID);
-        bool recv(ClientID clientID, NetMessage &msg);
-        bool blockingRecv(ClientID clientID, NetMessage &msg);
+        bool send(ClientID clientID, TCPMessage &msg);
+        void broadcast(TCPMessage &msg, std::optional<ClientID> ignoreClientID);
+        bool recv(ClientID clientID, TCPMessage &msg);
+        bool blockingRecv(ClientID clientID, TCPMessage &msg);
 
         bool isClientConnected(ClientID clientID);
         void disconnectClient(ClientID clientID);
@@ -47,8 +47,8 @@ class NetServer
 
         asio::ip::tcp::acceptor m_acceptor;
 
-        std::unordered_map<ClientID, std::shared_ptr<NetConnection>> m_clients;
-        std::shared_ptr<NetConnection> getClient(ClientID clientID);
+        std::unordered_map<ClientID, std::shared_ptr<TCPConnection>> m_clients;
+        std::shared_ptr<TCPConnection> getClient(ClientID clientID);
 
         ClientID m_nextNewClientID = 10000;
         ClientID getNewClientID();
