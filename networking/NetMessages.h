@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <iostream>
+#include <cassert>
+#include <format>
 
 // Forward declare NetConnection, let it access NetMessage body to use as buffer
 class NetConnection;
@@ -79,4 +81,49 @@ struct NetMessage
         std::vector<uint8_t> bodyRaw;
 
         friend class NetConnection;
+};
+
+const size_t MAX_UDP_BYTES_PER_PACKET = 128;
+
+struct UDPDataBuffer
+{
+    std::array<uint8_t, MAX_UDP_BYTES_PER_PACKET> bytes;
+    size_t usedSize = 0;
+};
+
+struct UDPPacket
+{
+    UDPPacket() : dataBuffer{} {}
+
+    template <typename T>
+    UDPPacket(const T& data)
+    {
+        static_assert(std::is_trivially_copyable<T>::value,
+            "Data must be trivially copyable");
+
+        assert(sizeof(T) < MAX_UDP_BYTES_PER_PACKET);
+
+        std::memcpy(dataBuffer.bytes.data(), &data, sizeof(T));
+        dataBuffer.usedSize = sizeof(T);
+    }
+
+    template <typename T>
+    T data()
+    {
+        static_assert(std::is_trivially_copyable<T>::value,
+                        "Data must be trivially copyable");
+
+        if (sizeof(T) != dataBuffer.usedSize)
+        {
+            throw std::runtime_error(
+                std::format("Type size ({}) does not match actual packet size ({})",
+                            sizeof(T),
+                            dataBuffer.usedSize)
+            );
+        }
+
+        return *reinterpret_cast<const T*>(dataBuffer.bytes.data());
+    }
+
+    UDPDataBuffer dataBuffer;
 };

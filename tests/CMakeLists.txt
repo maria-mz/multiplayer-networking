@@ -10,6 +10,7 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(tests
   NetworkingTest.cpp
+  UDPNetworkingTest.cpp
   TSQueueTest.cpp
 )
 

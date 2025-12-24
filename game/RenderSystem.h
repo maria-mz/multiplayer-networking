@@ -50,11 +50,14 @@ class RenderSystem
                 }
             }
 
-            m_playerLabelAttributes.font = m_fontManager.getFont(
-                Constants::FILE_FONT_MAIN.c_str(), 12
-            );
-            m_playerLabelAttributes.color = {0, 0, 0, 255};
-            m_playerLabelAttributes.outlinePx = 0;
+            if (success)
+            {
+                m_playerLabelAttributes.font = m_fontManager.getFont(
+                    Constants::FILE_FONT_MAIN.c_str(), 12
+                );
+                m_playerLabelAttributes.color = {0, 0, 0, 255};
+                m_playerLabelAttributes.outlinePx = 0;
+            }
 
             return success;
         }
