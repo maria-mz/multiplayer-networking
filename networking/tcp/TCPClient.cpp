@@ -147,6 +147,11 @@ bool TCPClient::recv(TCPMessage &msg)
         ok = m_connection->recv(msg);
     }
 
+    if (msg.header.type == TCPMessageType::Disconnect)
+    {
+        m_connection->m_socket.close();
+    }
+
     return ok;
 }
 
@@ -158,6 +163,11 @@ bool TCPClient::blockingRecv(TCPMessage &msg)
     if (m_connection)
     {
         ok = m_connection->blockingRecv(msg);
+    }
+
+    if (msg.header.type == TCPMessageType::Disconnect)
+    {
+        m_connection->m_socket.close();
     }
 
     return ok;

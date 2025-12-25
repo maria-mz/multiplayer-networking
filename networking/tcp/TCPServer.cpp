@@ -93,12 +93,12 @@ void TCPServer::start()
                 m_ioContext.run();
                 LOG_INFO("ASIO context stopped");
             }
-            catch (const std::system_error& e)
-            {
-                // Socket already closed
+            catch (const std::exception& e) {
+                LOG_ERROR("ASIO context exception: %s", e.what());
             }
         }
     );
+    LOG_INFO("Started TCP server");
 }
 
 
@@ -124,6 +124,8 @@ void TCPServer::shutdown()
         LOG_INFO("Joining ASIO context thread");
         m_contextThread.join();
     }
+
+    LOG_INFO("Shutdown TCP server");
 }
 
 

@@ -6,35 +6,48 @@ std::shared_ptr<TCPConnection> TCPConnection::create(asio::io_context &io_contex
     return std::shared_ptr<TCPConnection>(new TCPConnection(io_context));
 }
 
+// Note: Uses self = shared_from_this() inside async handlers instead of *this*
+//       because it is possible that the TCPConnection object is destroyed before
+//       the handler finishes executing (e.g., when the server removes the connection).
+//       Confirmed with address sanitizer that this was the cause of seg faults when
+//       clients would disconnect. The object should be destroyed after all async
+//       handlers finish executing.
+//
+// Note: Since the owner of TCPConnection already opens the socket, it should also
+//       close the socket so the ownership is simpler. It should close the socket
+//       when it receives a Disconnect message.
+
 
 void TCPConnection::readHeader()
 {
     m_currentMsgIn = TCPMessage();
+    auto self = shared_from_this();
 
     asio::async_read(
         m_socket,
         asio::buffer((&m_currentMsgIn.header), sizeof(TCPMessageHeader)),
-        [this](const std::error_code &ec, size_t length)
+        [self](const std::error_code &ec, size_t length)
         {
             if (!ec)
             {
-                if (m_currentMsgIn.header.size > 0)
+                if (self->m_currentMsgIn.header.size > 0)
                 {
-                    m_currentMsgIn.bodyRaw.resize(m_currentMsgIn.header.size);
-                    readBody();
+                    self->m_currentMsgIn.bodyRaw.resize(self->m_currentMsgIn.header.size);
+                    self->readBody();
                 }
                 else
                 {
-                    m_inMessages.push(m_currentMsgIn);
+                    self->m_inMessages.push(self->m_currentMsgIn);
 
-                    readHeader();
+                    self->readHeader();
                 }
             }
             else
             {
-                LOG_DEBUG("Message read failure");
-                m_socket.close();
-                m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
+                LOG_WARNING("Failed to read header: %s (id=%u)",
+                            ec.message().c_str(),
+                            self->m_id);
+                self->m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
             }
         }
     );
@@ -43,23 +56,26 @@ void TCPConnection::readHeader()
 
 void TCPConnection::readBody()
 {
+    auto self = shared_from_this();
+
     asio::async_read(
         m_socket,
         asio::buffer((m_currentMsgIn.bodyRaw.data()), m_currentMsgIn.bodyRaw.size()),
-        [this](const std::error_code &ec, size_t length)
+        [self](const std::error_code &ec, size_t length)
         {
             if (!ec)
             {
                 // Read a whole message! (header and body)
-                m_inMessages.push(m_currentMsgIn);
+                self->m_inMessages.push(self->m_currentMsgIn);
 
-                readHeader();
+                self->readHeader();
             }
             else
             {
-                LOG_DEBUG("Message read failure");
-                m_socket.close();
-                m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
+                LOG_WARNING("Failed to read body: %s (id=%u)",
+                            ec.message().c_str(),
+                            self->m_id);
+                self->m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
             }
         }
     );
@@ -73,32 +89,35 @@ void TCPConnection::writeHeader()
         return;
     }
 
+    auto self = shared_from_this();
+
     asio::async_write(
         m_socket,
         asio::buffer(&m_currentMsgOut.header, sizeof(TCPMessageHeader)),
-        [this](std::error_code ec, std::size_t length)
+        [self](std::error_code ec, std::size_t length)
         {
             if (!ec)
             {
-                if (m_currentMsgOut.header.size > 0)
+                if (self->m_currentMsgOut.header.size > 0)
                 {
-                    writeBody();
+                    self->writeBody();
                 }
                 else
                 {
-                    m_outMessages.pop();
+                    self->m_outMessages.pop();
 
-                    if (!m_outMessages.empty())
+                    if (!self->m_outMessages.empty())
                     {
-                        writeHeader();
+                        self->writeHeader();
                     }
                 }
             }
             else
             {
-                LOG_DEBUG("Message write failure");
-                m_socket.close();
-                m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
+                LOG_WARNING("Failed to write header: %s (id=%u)",
+                            ec.message().c_str(),
+                            self->m_id);
+                self->m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
             }
         }
     );
@@ -107,25 +126,28 @@ void TCPConnection::writeHeader()
 
 void TCPConnection::writeBody()
 {
+    auto self = shared_from_this();
+
     asio::async_write(
         m_socket,
         asio::buffer((m_currentMsgOut.bodyRaw.data()), m_currentMsgOut.bodyRaw.size()),
-        [this](std::error_code ec, std::size_t length)
+        [self](std::error_code ec, std::size_t length)
         {
             if (!ec)
             {
-                m_outMessages.pop();
+                self->m_outMessages.pop();
 
-                if (!m_outMessages.empty())
+                if (!self->m_outMessages.empty())
                 {
-                    writeHeader();
+                    self->writeHeader();
                 }
             }
             else
             {
-                LOG_DEBUG("Message write failure");
-                m_socket.close();
-                m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
+                LOG_WARNING("Failed to write body: %s (id=%u)",
+                            ec.message().c_str(),
+                            self->m_id);
+                self->m_inMessages.push(TCPMessage{TCPMessageType::Disconnect});
             }
         }
     );
@@ -150,18 +172,20 @@ void TCPConnection::send(TCPMessage &msg)
     //           bytes but might instead read part of the next header and stall)
     //      Interestingly, this also solves the issue where messages were being
     //      received out of order.
+    auto self = shared_from_this();
+
     asio::post(
         m_ioContext,
-        [this, msg]()
+        [self, msg]()
         {
-            if (m_outMessages.empty())
+            if (self->m_outMessages.empty())
             {
-                m_outMessages.push(msg);
-                writeHeader();
+                self->m_outMessages.push(msg);
+                self->writeHeader();
             }
             else
             {
-                m_outMessages.push(msg);
+                self->m_outMessages.push(msg);
             }
         }
     );
