@@ -4,32 +4,38 @@
 #include <format>
 
 
-const size_t MAX_UDP_BYTES_PER_PACKET = 128;
+const size_t MAX_UDP_BYTES_PER_MESSAGE = 128;
 
 struct UDPDataBuffer
 {
-    std::array<uint8_t, MAX_UDP_BYTES_PER_PACKET> bytes;
+    std::array<uint8_t, MAX_UDP_BYTES_PER_MESSAGE> bytes;
     size_t usedSize = 0;
+
+    void clear()
+    {
+        usedSize = 0;
+        bytes.fill(0);
+    }
 };
 
-struct UDPPacket
+struct UDPMessage
 {
-    UDPPacket() : dataBuffer{} {}
+    UDPMessage() : dataBuffer{} {}
 
     template <typename T>
-    UDPPacket(const T& data)
+    UDPMessage(const T& data)
     {
         static_assert(std::is_trivially_copyable<T>::value,
             "Data must be trivially copyable");
 
-        assert(sizeof(T) < MAX_UDP_BYTES_PER_PACKET);
+        assert(sizeof(T) < MAX_UDP_BYTES_PER_MESSAGE);
 
         std::memcpy(dataBuffer.bytes.data(), &data, sizeof(T));
         dataBuffer.usedSize = sizeof(T);
     }
 
     template <typename T>
-    T data()
+    T data() const
     {
         static_assert(std::is_trivially_copyable<T>::value,
                         "Data must be trivially copyable");
@@ -37,7 +43,7 @@ struct UDPPacket
         if (sizeof(T) != dataBuffer.usedSize)
         {
             throw std::runtime_error(
-                std::format("Type size ({}) does not match actual packet size ({})",
+                std::format("Type size ({}) does not match actual message size ({})",
                             sizeof(T),
                             dataBuffer.usedSize)
             );

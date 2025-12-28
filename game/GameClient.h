@@ -1,81 +1,171 @@
 #pragma once
 
-#include "../networking/tcp/TCPClient.h"
-#include "../networking/tcp/TCPMessage.h"
+#include "../common/Constants.h"
+#include "../common/Utils.h"
 
-#include "GameMessage.h"
+#include "NetworkClient.h"
+#include "RenderSystem.h"
+#include "InputSystem.h"
+#include "GameSimulation.h"
+#include "FrameTimer.h"
 
 
 class GameClient
 {
     public:
-        GameClient()
+        struct Config
         {
-            m_tcpClient = std::make_unique<TCPClient>();
+            Constants::TransportType transportForPlayerStateUpdates = Constants::TransportType::TCP;
+
+            int assignPlayerIDTimeoutMs      = 3000;
+            int assignPlayerIDPollIntervalMs = 50;
+        };
+
+    public:
+        GameClient(Config config, std::shared_ptr<NetworkClient> networkClient)
+        : m_config(config)
+        , m_networkClient(networkClient)
+        {
+            assert(m_networkClient != nullptr);
         }
 
-        ~GameClient()
+        void init()
         {
-            m_tcpClient->disconnect();
-        }
-
-        bool connectToServer(std::string serverIP, int serverPort)
-        {
-            bool isConnected = m_tcpClient->connectToServer(serverIP, std::to_string(serverPort));
-            return isConnected;
-        }
-
-        bool isConnectedToServer()
-        {
-            return m_tcpClient->isConnected();
-        }
-
-        void disconnect()
-        {
-            m_tcpClient->disconnect();
-        }
-
-        void pumpSend(const std::vector<GameMessage>& outMessages)
-        {
-            for (const auto& outMsg : outMessages)
+            if (!m_renderSystem.init())
             {
-                sendMessageToServer(outMsg);
-            }
-        }
-
-        std::vector<GameMessage> pumpReceive()
-        {
-            std::vector<GameMessage> inMessages;
-            GameMessage inMsg;
-
-            while (recieveMessageFromServer(inMsg))
-            {
-                inMessages.push_back(inMsg);
+                throw std::runtime_error("Failed to initialize render system");
             }
 
-            return inMessages;
+            m_networkClient->doUDPHandshake();
+
+            if (!m_networkClient->isConnected())
+            {
+                throw std::runtime_error("Network client failed to connect to server");
+            }
+
+            bool assignedPlayerID = waitToAssignLocalPlayerID();
+
+            if (!assignedPlayerID)
+            {
+                throw std::runtime_error("Timed out waiting for AssignLocalPlayerID");
+            }
+
+            m_gameSimulation.addLocalPlayer(m_localPlayerID);
+        }
+
+        bool isConnected() const
+        {
+            return m_networkClient->isConnected();
+        }
+
+        void run()
+        {
+            constexpr int GAME_TICK_RATE_MS = 16; // ~16 ms per frame (~60 updates per second)
+
+            bool shouldQuit = false;
+            FrameTimer frameTimer(GAME_TICK_RATE_MS);
+
+            std::vector<Message> inMessages{};
+
+            while (!shouldQuit && isConnected())
+            {
+                frameTimer.startFrame();
+
+                auto incomingMessages = pumpReceive();
+
+                auto events = m_inputSystem.poll();
+
+                for (const auto& event : events)
+                {
+                    if (auto appEvent = std::get_if<AppEvent>(&event))
+                    {
+                        if (*appEvent == AppEvent::Quit)
+                        {
+                            shouldQuit = true;
+                        }
+                    }
+                    else if (auto gameEvent = std::get_if<GameEvent>(&event))
+                    {
+                        m_gameSimulation.applyLocalInput(*gameEvent);
+                    }
+                }
+
+                m_gameSimulation.applyIncomingMessages(incomingMessages);
+                m_gameSimulation.updateSimulation(frameTimer.getDeltaTime());
+
+                auto outgoingMessages = m_gameSimulation.collectOutgoingMessages();
+                pumpSend(outgoingMessages);
+
+                m_renderSystem.renderGame(m_gameSimulation);
+
+                frameTimer.endFrame();
+            }
         }
 
     private:
-        void sendMessageToServer(GameMessage msg)
+        bool waitToAssignLocalPlayerID()
         {
-            TCPMessage netMsg{TCPMessageType::Data, msg};
-            m_tcpClient->send(netMsg);
-        }
+            int elapsed = 0;
 
-        bool recieveMessageFromServer(GameMessage& msg)
-        {
-            TCPMessage netMsg;
-            bool ok = m_tcpClient->recv(netMsg);
-
-            if (!ok || netMsg.header.type != TCPMessageType::Data)
+            while (elapsed < m_config.assignPlayerIDTimeoutMs)
             {
-                return false;
+                m_networkClient->pumpReceive();
+                auto messages = m_networkClient->consumeIncomingMessages();
+
+                for (const auto& msg : messages)
+                {
+                    if (msg.type == MessageType::AssignLocalPlayerID)
+                    {
+                        m_localPlayerID = msg.data.assignLocalPlayerID.playerID;
+
+                        LOG_INFO("Received player ID from server (id=%u)",
+                                 m_localPlayerID);
+
+                        return true;
+                    }
+                }
+
+                sleepMs(m_config.assignPlayerIDPollIntervalMs);
+                elapsed += m_config.assignPlayerIDPollIntervalMs;
             }
 
-            msg = netMsg.body<GameMessage>();
-            return true;
+            return false;
         }
 
-        std::unique_ptr<TCPClient> m_tcpClient;
+        void pumpSend(const std::vector<Message>& outMessages)
+        {
+            for (const auto& outMsg : outMessages)
+            {
+                if (outMsg.type == MessageType::PlayerStateUpdate)
+                {
+                    m_networkClient->queueOutgoingMessage(
+                        outMsg, m_config.transportForPlayerStateUpdates
+                    );
+                }
+                else
+                {
+                    m_networkClient->queueOutgoingMessage(
+                        outMsg, Constants::TransportType::TCP
+                    );
+                }
+            }
+
+            m_networkClient->pumpSend();
+        }
+
+        std::vector<Message> pumpReceive()
+        {
+            m_networkClient->pumpReceive();
+            return m_networkClient->consumeIncomingMessages();
+        }
+
+    private:
+        std::shared_ptr<NetworkClient> m_networkClient;
+        RenderSystem m_renderSystem;
+        GameSimulation m_gameSimulation;
+        InputSystem m_inputSystem;
+
+        PlayerID m_localPlayerID;
+
+        Config m_config;
 };

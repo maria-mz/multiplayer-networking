@@ -7,7 +7,7 @@
 #include "../common/Logging.h"
 
 #include "Player.h"
-#include "GameMessage.h"
+#include "Message.h"
 
 using PlayerID = uint;
 
@@ -79,19 +79,19 @@ class GameSimulation
             }
         }
 
-        void applyIncomingMessages(const std::vector<GameMessage>& inMessages)
+        void applyIncomingMessages(const std::vector<Message>& inMessages)
         {
             for (const auto& msg : inMessages)
             {
                 switch (msg.type)
                 {
-                    case GameMessageType::PlayerJoined:
+                    case MessageType::PlayerJoined:
                         handlePlayerJoinedMessage(msg.data.playerJoined);
                         break;
-                    case GameMessageType::PlayerLeft:
+                    case MessageType::PlayerLeft:
                         handlePlayerLeftMessage(msg.data.playerLeft);
                         break;
-                    case GameMessageType::PlayerStateUpdate:
+                    case MessageType::PlayerStateUpdate:
                         handlePlayerStateUpdateMessage(msg.data.playerStateUpdate);
                         break;
                     default:
@@ -100,7 +100,7 @@ class GameSimulation
             }
         }
 
-        std::vector<GameMessage> collectOutgoingMessages()
+        std::vector<Message> collectOutgoingMessages()
         {
             if (!m_localPlayerID)
             {
@@ -109,8 +109,8 @@ class GameSimulation
 
             std::unique_ptr<Player>& localPlayer = getLocalPlayer();
 
-            GameMessage localStateUpdateMsg;
-            localStateUpdateMsg.type = GameMessageType::PlayerStateUpdate;
+            Message localStateUpdateMsg;
+            localStateUpdateMsg.type = MessageType::PlayerStateUpdate;
             localStateUpdateMsg.data.playerStateUpdate = {
                 .posX = localPlayer->m_position.x,
                 .posY = localPlayer->m_position.y,
@@ -120,7 +120,7 @@ class GameSimulation
                 .playerID = *m_localPlayerID
             };
 
-            return std::vector<GameMessage>{localStateUpdateMsg};
+            return std::vector<Message>{localStateUpdateMsg};
         }
 
         void updateSimulation(int deltaTime)

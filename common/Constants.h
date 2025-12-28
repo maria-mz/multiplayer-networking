@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 namespace Constants
 {
@@ -11,4 +12,7 @@ namespace Constants
 
     // Assets
     const std::string FILE_FONT_MAIN = std::string(ASSETS_DIR) + "/NotoSans.ttf";
+
+    // Networking
+    enum class TransportType { TCP, UDP };
 }

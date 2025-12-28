@@ -1,77 +1,72 @@
 #pragma once
 
-#include "../networking/tcp/TCPServer.h"
+#include "../common/Constants.h"
+
 #include "../networking/tcp/TCPMessage.h"
+#include "../networking/udp/UDPMessage.h"
 
-#include "GameMessage.h"
-
+#include "NetworkServer.h"
 
 class GameServer
 {
     public:
-        GameServer(int port)
+        struct Config
         {
-            m_tcpServer = std::make_unique<TCPServer>(port);
+            Constants::TransportType transportForPlayerStateUpdates = Constants::TransportType::TCP;
+        };
 
-            m_tcpServer->setOnClientConnect([this](ClientID clientID) {
+    public:
+        GameServer(Config config, std::shared_ptr<NetworkServer> networkServer)
+        : m_config(config)
+        , m_networkServer(networkServer)
+        {
+            m_networkServer->setOnClientConnect([this](ClientID clientID) {
                 onClientConnected(clientID);
             });
-            m_tcpServer->setOnClientDisconnect([this](ClientID clientID) {
+            m_networkServer->setOnClientDisconnect([this](ClientID clientID) {
                 onClientDisconnected(clientID);
             });
         }
 
-        ~GameServer()
+        void update()
         {
-            m_tcpServer->shutdown();
-        }
+            m_networkServer->acceptConnections();
+            m_networkServer->pumpReceive();
 
-        void start()
-        {
-            m_tcpServer->start();
-        }
-
-        void shutdown()
-        {
-            m_tcpServer->shutdown();
-        }
-
-        void pump()
-        {
             // Relay PlayerState updates from one player to every player,
             // for all players.
-            //
-            // Take a snapshot of the clientIDs. Seems to prevent seg faults.
-            // TODO: Investigate
-            auto clientIDsSnapshot = m_tcpServer->getClientIDs();
-            for (const auto& clientID : clientIDsSnapshot)
+            for (const auto& clientID : m_networkServer->getClientIDs())
             {
-                GameMessage gameMsg;
-
-                while (recieveMessage(clientID, gameMsg))
+                auto messages = m_networkServer->consumeIncomingMessages(clientID);
+                for (const auto& message : messages)
                 {
-                    if (gameMsg.type == GameMessageType::PlayerStateUpdate)
+                    if (message.type == MessageType::PlayerStateUpdate)
                     {
-                        broadcastMessage(gameMsg, clientID);
+                        m_networkServer->queueBroadcast(
+                            message, m_config.transportForPlayerStateUpdates, clientID
+                        );
                     }
                 }
             }
+
+            m_networkServer->pumpSend();
+            m_networkServer->cleanupDisconnectedClients();
         }
 
     private:
         void onClientConnected(ClientID connectedClientID)
         {
-            GameMessage welcomeMsg{
-                GameMessageType::Welcome,
+            Message assignPlayerID{
+                MessageType::AssignLocalPlayerID,
                 {
-                    .welcome = {
+                    .assignLocalPlayerID = {
                         connectedClientID
                     }
                 }
             };
 
-            GameMessage playerJoinedMsg{
-                GameMessageType::PlayerJoined,
+            Message playerJoined{
+                MessageType::PlayerJoined,
                 {
                     .playerJoined = {
                         connectedClientID
@@ -79,14 +74,18 @@ class GameServer
                 }
             };
 
-            sendMessage(connectedClientID, welcomeMsg);
-            broadcastMessage(playerJoinedMsg, connectedClientID);
+            m_networkServer->queueOutgoingMessage(
+                connectedClientID, assignPlayerID, Constants::TransportType::TCP
+            );
+            m_networkServer->queueBroadcast(
+                assignPlayerID, Constants::TransportType::TCP, connectedClientID
+            );
         };
 
         void onClientDisconnected(ClientID disconnectedClientID)
         {
-            GameMessage playerLeftMsg{
-                GameMessageType::PlayerLeft,
+            Message playerLeftMsg{
+                MessageType::PlayerLeft,
                 {
                     .playerLeft = {
                         disconnectedClientID
@@ -94,34 +93,12 @@ class GameServer
                 }
             };
 
-            broadcastMessage(playerLeftMsg, disconnectedClientID);
+            m_networkServer->queueBroadcast(
+                playerLeftMsg, Constants::TransportType::TCP, disconnectedClientID
+            );
         };
 
-        void sendMessage(ClientID clientID, GameMessage msg)
-        {
-            TCPMessage netMsg{TCPMessageType::Data, msg};
-            m_tcpServer->send(clientID, netMsg);
-        }
-
-        void broadcastMessage(GameMessage msg, std::optional<ClientID> ignoreClientID)
-        {
-            TCPMessage netMsg{TCPMessageType::Data, msg};
-            m_tcpServer->broadcast(netMsg, ignoreClientID);
-        }
-
-        bool recieveMessage(ClientID clientID, GameMessage& msg)
-        {
-            TCPMessage netMsg;
-            bool ok = m_tcpServer->recv(clientID, netMsg);
-
-            if (!ok || netMsg.header.type != TCPMessageType::Data)
-            {
-                return false;
-            }
-
-            msg = netMsg.body<GameMessage>();
-            return true;
-        }
-
-        std::unique_ptr<TCPServer> m_tcpServer;
+    private:
+        std::shared_ptr<NetworkServer> m_networkServer;
+        Config m_config;
 };

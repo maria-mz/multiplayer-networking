@@ -9,19 +9,12 @@ class TCPConnection;
 enum class TCPMessageType : u_int32_t
 {
     Unknown = 0,
-    ConnectOk,
-    ConnectDenied,
-    Disconnect,
     Data
 };
 
 inline std::ostream& operator<<(std::ostream& os, TCPMessageType type) {
     switch (type) {
-        case TCPMessageType::ConnectOk:         return os << "ConnectOk";
-        case TCPMessageType::ConnectDenied:     return os << "ConnectDenied";
-        case TCPMessageType::Disconnect:        return os << "Disconnect";
         case TCPMessageType::Data:              return os << "Data";
-
         default:                                return os << "Unknown";
     }
 }
@@ -30,11 +23,6 @@ struct TCPMessageHeader
 {
     TCPMessageType type;
     u_int32_t size;      // Number of bytes in the message body
-};
-
-struct ConnectOkBody
-{
-    u_int32_t assignedClientID;
 };
 
 struct TCPMessage
@@ -58,7 +46,7 @@ struct TCPMessage
         }
 
         template <typename T>
-        T body()
+        T body() const
         {
             static_assert(std::is_trivially_copyable<T>::value,
                           "Message body must be trivially copyable");

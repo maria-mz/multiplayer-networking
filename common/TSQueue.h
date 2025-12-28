@@ -1,7 +1,7 @@
 #pragma once
 
 #include <deque>
-
+#include <optional>
 
 template <typename T>
 class TSQueue
@@ -34,6 +34,21 @@ class TSQueue
             }
 
             return item;
+        }
+
+        std::optional<T> tryPop()
+        {
+            T item;
+
+            std::unique_lock<std::mutex> lock(m_mtx);
+
+            if (!m_deque.empty())
+            {
+                item = m_deque.front();
+                m_deque.pop_front();
+                return item;
+            }
+            return std::nullopt;
         }
 
         bool front(T &item)

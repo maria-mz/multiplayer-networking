@@ -9,8 +9,10 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 add_executable(tests
-  TCPNetworkingTest.cpp
-  UDPNetworkingTest.cpp
+  NetworkServerTest.cpp
+  NetworkClientTest.cpp
+  UDPTransportTest.cpp
+  TCPConnectionTest.cpp
   TSQueueTest.cpp
 )
 
