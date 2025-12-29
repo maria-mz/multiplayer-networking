@@ -119,7 +119,8 @@ void PlayerStateRun::exit(Player &player)
 Player::Player()
     : m_stateObject(std::make_unique<PlayerStateIdle>()),
       m_transform{WIDTH_PX, WIDTH_PX, 1},
-      m_position{0, 0}
+      m_position{(Constants::WINDOW_WIDTH / 2) - (WIDTH_PX / 2),
+                 (Constants::WINDOW_HEIGHT / 2) - (WIDTH_PX / 2)}
 {
     m_stateObject->enter(*this);
 }

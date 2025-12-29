@@ -96,7 +96,8 @@ class GameClient
                 auto outgoingMessages = m_gameSimulation.collectOutgoingMessages();
                 pumpSend(outgoingMessages);
 
-                m_renderSystem.renderGame(m_gameSimulation);
+                m_renderSystem.renderGame(m_gameSimulation,
+                                          m_config.transportForPlayerStateUpdates);
 
                 frameTimer.endFrame();
             }

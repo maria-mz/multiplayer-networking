@@ -1,6 +1,6 @@
 #pragma once
 
-#include <unordered_map>
+#include <map>
 #include <format>
 #include <cassert>
 
@@ -31,6 +31,7 @@ class GameSimulation
         {
             addPlayer(localPlayerID);
             setLocalPlayerID(localPlayerID);
+            m_players[localPlayerID]->isLocal = true;
         }
 
         void removePlayer(PlayerID playerID)
@@ -132,7 +133,7 @@ class GameSimulation
             }
         }
 
-        const std::unordered_map<PlayerID, std::unique_ptr<Player>>& getPlayers()
+        const std::map<PlayerID, std::unique_ptr<Player>>& getPlayers()
         {
             return m_players;
         }
@@ -209,6 +210,6 @@ class GameSimulation
         }
 
     private:
-        std::unordered_map<PlayerID, std::unique_ptr<Player>> m_players;
+        std::map<PlayerID, std::unique_ptr<Player>> m_players;
         std::optional<PlayerID> m_localPlayerID;
 };

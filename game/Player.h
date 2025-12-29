@@ -76,7 +76,7 @@ struct Transform
 class Player
 {
     public:
-        static constexpr int WIDTH_PX = 64;
+        static constexpr int WIDTH_PX = 32;
         static constexpr float SPEED = 0.35; // Pixels per ms
 
         Player();
@@ -95,6 +95,8 @@ class Player
         Transform m_transform;
 
         InputManager m_inputManager;
+
+        bool isLocal = false;
 
     private:
         PlayerState m_currentState;

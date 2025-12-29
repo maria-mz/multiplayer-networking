@@ -46,7 +46,7 @@ int main()
 
     GameServer::Config gameServerConfig{
         // Must match client's transport type
-        .transportForPlayerStateUpdates = Constants::TransportType::UDP
+        .transportForPlayerStateUpdates = Constants::TransportType::TCP
     };
 
 

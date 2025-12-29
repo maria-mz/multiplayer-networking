@@ -11,7 +11,7 @@ namespace Constants
     constexpr int WINDOW_HEIGHT = 480;
 
     // Assets
-    const std::string FILE_FONT_MAIN = std::string(ASSETS_DIR) + "/NotoSans.ttf";
+    const std::string FILE_FONT_MAIN = std::string(ASSETS_DIR) + "/Inconsolata.ttf";
 
     // Networking
     enum class TransportType { TCP, UDP };

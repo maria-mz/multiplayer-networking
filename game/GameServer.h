@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "../common/Constants.h"
 
 #include "../networking/tcp/TCPMessage.h"
@@ -56,11 +58,13 @@ class GameServer
     private:
         void onClientConnected(ClientID connectedClientID)
         {
+            uint playerID = getNextPlayerID();
+
             Message assignPlayerID{
                 MessageType::AssignLocalPlayerID,
                 {
                     .assignLocalPlayerID = {
-                        connectedClientID
+                        playerID
                     }
                 }
             };
@@ -69,10 +73,12 @@ class GameServer
                 MessageType::PlayerJoined,
                 {
                     .playerJoined = {
-                        connectedClientID
+                        playerID
                     }
                 }
             };
+
+            m_clientIDToPlayerID[connectedClientID] = playerID;
 
             m_networkServer->queueOutgoingMessage(
                 connectedClientID, assignPlayerID, Constants::TransportType::TCP
@@ -84,11 +90,13 @@ class GameServer
 
         void onClientDisconnected(ClientID disconnectedClientID)
         {
+            uint playerID = m_clientIDToPlayerID[disconnectedClientID];
+
             Message playerLeftMsg{
                 MessageType::PlayerLeft,
                 {
                     .playerLeft = {
-                        disconnectedClientID
+                        playerID
                     }
                 }
             };
@@ -98,7 +106,12 @@ class GameServer
             );
         };
 
+        uint getNextPlayerID() { return m_nextPlayerID++; }
+
     private:
         std::shared_ptr<NetworkServer> m_networkServer;
         Config m_config;
+
+        uint m_nextPlayerID = 0;
+        std::unordered_map<ClientID, uint> m_clientIDToPlayerID;
 };
