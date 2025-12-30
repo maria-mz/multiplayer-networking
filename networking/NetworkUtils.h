@@ -56,9 +56,7 @@ inline std::shared_ptr<TCPConnection>
 establishTCPConnection(asio::io_context& ioContext,
                        asio::ip::tcp::endpoint endpoint)
 {
-    LOG_INFO("Establishing TCP connection with %s:%d",
-             endpoint.address().to_string().c_str(),
-             endpoint.port());
+    LOG_INFO("Establishing TCP connection");
 
     asio::ip::tcp::socket socket(ioContext);
 

@@ -111,9 +111,7 @@ class NetworkClient
                 }
                 else
                 {
-                    LOG_WARNING("Received UDP message from unknown sender %s:%u",
-                                sender.address().to_string().c_str(),
-                                sender.port());
+                    LOG_WARNING("Received UDP message from unknown sender");
                 }
             }
         }

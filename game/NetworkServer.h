@@ -169,9 +169,7 @@ class NetworkServer
                 }
                 else
                 {
-                    LOG_WARNING("Received UDP message from unknown sender %s:%u",
-                                sender.address().to_string().c_str(),
-                                sender.port());
+                    LOG_WARNING("Received UDP message from unknown sender");
                 }
             }
         }
@@ -306,10 +304,8 @@ class NetworkServer
 
             if (it == m_clients.end())
             {
-                LOG_WARNING("UDP bind failed: no matching client for token %d from %s:%u",
-                            udpBindMessage.token,
-                            sender.address().to_string().c_str(),
-                            sender.port());
+                LOG_WARNING("UDP bind failed: no matching client for token %d",
+                            udpBindMessage.token);
                 return;
             }
 
@@ -319,10 +315,7 @@ class NetworkServer
             client.status = NetworkClient::Status::Connected;
             m_udpEndpointToClientID[sender] = client.clientID;
 
-            LOG_INFO("UDP bound client %d to %s:%u",
-                     client.clientID,
-                     sender.address().to_string().c_str(),
-                     sender.port());
+            LOG_INFO("UDP bound client %d", client.clientID);
 
             Message bindAck{
                 .type = MessageType::UDPBindAck,

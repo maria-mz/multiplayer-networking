@@ -124,11 +124,6 @@ class UDPTransport
                 {
                     if (!ec)
                     {
-                        LOG_DEBUG("Message received from %s:%u, length=%zu",
-                                  m_recvSender.address().to_string().c_str(),
-                                  m_recvSender.port(),
-                                  m_recvMsg.dataBuffer.usedSize);
-
                         self->m_recvMsg.dataBuffer.usedSize = length;
                         self->m_inMessages.push({self->m_recvMsg, self->m_recvSender});
                     }
@@ -161,11 +156,6 @@ class UDPTransport
                 {
                     if (!ec)
                     {
-                        LOG_DEBUG("Sent message to %s:%u, length=%zu",
-                                  receiver.address().to_string().c_str(),
-                                  receiver.port(),
-                                  msg.dataBuffer.usedSize);
-
                         return;
                     }
                     else if (ec == asio::error::operation_aborted)
@@ -174,10 +164,7 @@ class UDPTransport
                     }
                     else
                     {
-                        LOG_ERROR("Failed to send message to %s:%u: %s",
-                                  receiver.address().to_string().c_str(),
-                                  receiver.port(),
-                                  ec.message().c_str());
+                        LOG_ERROR("Failed to send message: %s", ec.message().c_str());
                     }
                 }
             );
