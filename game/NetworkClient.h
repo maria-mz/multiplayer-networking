@@ -5,6 +5,7 @@
 #include <functional>
 #include <optional>
 #include <cassert>
+#include <chrono>
 
 #include "../common/Utils.h"
 #include "../common/Constants.h"
@@ -29,6 +30,17 @@ class NetworkClient
 
             int udpBindAckTimeoutMs     = 3000;
             int udpBindAckPollMs        = 50;
+
+            bool enablePing = true;
+            std::chrono::milliseconds pingInterval{1000};
+            Constants::TransportType pingTransport = Constants::TransportType::TCP;
+        };
+
+    private:
+        struct PendingPing
+        {
+            std::chrono::steady_clock::time_point timePingSent;
+            uint32_t seq = 0;
         };
 
     public:
@@ -86,7 +98,7 @@ class NetworkClient
             TCPMessage tcpMessage;
             while (m_tcpConnection->tryRecv(tcpMessage))
             {
-                m_inbox.push_back(fromTCPMessage(tcpMessage));
+                dispatchIncomingMessage(fromTCPMessage(tcpMessage));
             }
 
             UDPMessage udpMessage;
@@ -95,7 +107,7 @@ class NetworkClient
             {
                 if (sender == m_config.serverUDPEndpoint)
                 {
-                    m_inbox.push_back(fromUDPMessage(udpMessage));
+                    dispatchIncomingMessage(fromUDPMessage(udpMessage));
                 }
                 else
                 {
@@ -131,6 +143,8 @@ class NetworkClient
 
         void pumpSend()
         {
+            maybeQueuePing();
+
             for (const auto& tcpMessage : m_tcpOutbox)
             {
                 sendTCPMessage(tcpMessage);
@@ -142,6 +156,11 @@ class NetworkClient
 
             m_tcpOutbox.clear();
             m_udpOutbox.clear();
+        }
+
+        std::optional<float> getPingMs() const
+        {
+            return m_pingMs;
         }
 
     private:
@@ -229,6 +248,56 @@ class NetworkClient
             return m_udpTransport->isOpen();
         }
 
+        void dispatchIncomingMessage(const Message& message)
+        {
+            if (message.type == MessageType::Pong)
+            {
+                handlePong(message.data.pong);
+            }
+            else
+            {
+                m_inbox.push_back(message);
+            }
+        }
+
+        void maybeQueuePing()
+        {
+            if (!m_config.enablePing)
+            {
+                return;
+            }
+
+            auto now = std::chrono::steady_clock::now();
+
+            if (isPingInProgress(now))
+            {
+                return;
+            }
+
+            m_pendingPing = PendingPing{now, m_nextPingSeq++};
+            Message pingMsg{
+                .type = MessageType::Ping,
+                .data = { .ping = { .seq = m_pendingPing.value().seq } }
+            };
+            queueOutgoingMessage(pingMsg, m_config.pingTransport);
+        }
+
+        void handlePong(Pong pongMessage)
+        {
+            if (m_pendingPing && m_pendingPing.value().seq == pongMessage.seq)
+            {
+                auto now = std::chrono::steady_clock::now();
+                auto timeBetween = now - m_pendingPing.value().timePingSent;
+                m_pingMs = std::chrono::duration<float, std::milli>(timeBetween).count();
+            }
+        }
+
+        bool isPingInProgress(const auto& now) const
+        {
+            return m_pendingPing
+                && (now - m_pendingPing.value().timePingSent) < m_config.pingInterval;
+        }
+
     private:
         std::shared_ptr<TCPConnectionInterface> m_tcpConnection;
         std::shared_ptr<UDPTransportInterface> m_udpTransport;
@@ -240,4 +309,8 @@ class NetworkClient
         std::vector<UDPMessage> m_udpOutbox;
 
         bool m_doneUDPHandshake = false;
+
+        std::optional<PendingPing> m_pendingPing;
+        uint32_t m_nextPingSeq = 0;
+        std::optional<float> m_pingMs;
 };

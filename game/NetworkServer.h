@@ -142,12 +142,14 @@ class NetworkServer
                 TCPMessage tcpMessage;
                 while (client.tcpConnection->tryRecv(tcpMessage))
                 {
-                    client.inbox.push_back(fromTCPMessage(tcpMessage));
+                    dispatchIncomingMessage(client,
+                                            fromTCPMessage(tcpMessage),
+                                            Constants::TransportType::TCP);
                 }
             }
 
-            UDPMessage udpMessage;
             Message message;
+            UDPMessage udpMessage;
             asio::ip::udp::endpoint sender;
 
             while (m_udpTransport->tryRecv(udpMessage, sender))
@@ -157,7 +159,9 @@ class NetworkServer
                 auto it = m_udpEndpointToClientID.find(sender);
                 if (it != m_udpEndpointToClientID.end())
                 {
-                    m_clients[it->second].inbox.push_back(message);
+                    dispatchIncomingMessage(m_clients[it->second],
+                                            message,
+                                            Constants::TransportType::UDP);
                 }
                 else if (message.type == MessageType::UDPBind)
                 {
@@ -330,6 +334,31 @@ class NetworkServer
             {
                 m_onClientConnect(client.clientID);
             }
+        }
+
+        void dispatchIncomingMessage(NetworkClient& client,
+                                    const Message& message,
+                                    Constants::TransportType transport)
+        {
+            if (message.type == MessageType::Ping)
+            {
+                handlePing(client, message.data.ping, transport);
+            }
+            else
+            {
+                client.inbox.push_back(message);
+            }
+        }
+
+        void handlePing(NetworkClient& client,
+                        const Ping& pingMessage,
+                        Constants::TransportType pingTransport)
+        {
+            Message pongMsg{
+                .type = MessageType::Pong,
+                .data = { .pong = { .seq = pingMessage.seq } }
+            };
+            queueOutgoingMessage(client, pongMsg, pingTransport);
         }
 
         void sendTCPMessage(const TCPMessage& tcpMessage, NetworkClient& client)

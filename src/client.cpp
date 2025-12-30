@@ -49,12 +49,13 @@ int main(int argc, char* argv[])
     );
 
     NetworkClient::Config networkClientConfig{
-        .serverUDPEndpoint = serverUDPEndpoint
+        .serverUDPEndpoint = serverUDPEndpoint,
+        .pingTransport = Constants::TransportType::UDP
     };
 
     GameClient::Config gameClientConfig{
         // NOTE: Must match server's transport type
-        .transportForPlayerStateUpdates = Constants::TransportType::TCP
+        .transportForPlayerStateUpdates = Constants::TransportType::UDP
     };
 
 

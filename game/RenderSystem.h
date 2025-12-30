@@ -69,6 +69,7 @@ class RenderSystem
         }
 
         void renderGame(GameSimulation& gameSimulation,
+                        std::optional<float> ping,
                         Constants::TransportType transportType)
         {
             assert(m_renderer != nullptr);
@@ -83,7 +84,7 @@ class RenderSystem
                 renderPlayer(*player, id);
             }
 
-            renderHUD(gameSimulation, transportType);
+            renderHUD(gameSimulation, ping, transportType);
 
             SDL_RenderPresent(m_renderer);
         }
@@ -235,6 +236,7 @@ class RenderSystem
         }
 
         void renderHUD(GameSimulation& gameSimulation,
+                       std::optional<float> ping,
                        Constants::TransportType transportType)
         {
             assert(m_renderer != nullptr);
@@ -246,7 +248,10 @@ class RenderSystem
 
             std::vector<std::string> lines;
 
+            std::string pingText = ping.has_value() ? std::format("{:.0f}", *ping) : "--";
+
             lines.push_back(std::format("Transport: {}", transportTypeToString(transportType)));
+            lines.push_back(std::format("Ping: {} ms", pingText));
             lines.push_back("");
 
             for (auto& [id, player] : gameSimulation.getPlayers())

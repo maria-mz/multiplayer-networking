@@ -25,6 +25,9 @@ protected:
         cfg.udpBindRequestPollMs    = 1;
         cfg.udpBindAckTimeoutMs     = 10;
         cfg.udpBindAckPollMs        = 1;
+        // Disable ping as it sends messages, which interfere with tests
+        // checking messages.
+        cfg.enablePing = false;
 
         client = std::make_unique<NetworkClient>(tcpConn, udpTransport, cfg);
     }

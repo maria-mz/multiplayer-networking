@@ -97,6 +97,7 @@ class GameClient
                 pumpSend(outgoingMessages);
 
                 m_renderSystem.renderGame(m_gameSimulation,
+                                          m_networkClient->getPingMs(),
                                           m_config.transportForPlayerStateUpdates);
 
                 frameTimer.endFrame();
