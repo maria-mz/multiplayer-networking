@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <format>
+#include <cstring>
 
 
 const size_t MAX_UDP_BYTES_PER_MESSAGE = 128;

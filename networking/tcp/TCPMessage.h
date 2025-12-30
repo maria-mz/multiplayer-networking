@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <iostream>
+#include <cstring>
+
 
 // Forward declare TCPConnection so it can access TCPMessage body to use as buffer
 class TCPConnection;
