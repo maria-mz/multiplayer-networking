@@ -3,13 +3,15 @@
 #include <chrono>
 #include <csignal>
 
-#include "../common/Logging.h"
-#include "../networking/tcp/TCPConnection.h"
-#include "../networking/udp/UDPTransport.h"
-#include "../networking/NetworkUtils.h"
+#include "cli.h"
 
-#include "../game/GameClient.h"
-#include "../game/NetworkClient.h"
+#include "../../common/Logging.h"
+#include "../../networking/tcp/TCPConnection.h"
+#include "../../networking/udp/UDPTransport.h"
+#include "../../networking/NetworkUtils.h"
+
+#include "../../game/GameClient.h"
+#include "../../game/NetworkClient.h"
 
 
 std::unique_ptr<GameClient> initClient(asio::ip::tcp::endpoint serverTCPEndpoint,
@@ -37,9 +39,11 @@ std::unique_ptr<GameClient> initClient(asio::ip::tcp::endpoint serverTCPEndpoint
 int main(int argc, char* argv[])
 {
     // Configuration
+    CLIOptions opts = parseArgs(argc, argv);
+
     std::string serverIPAddress = "127.0.0.1";
-    u_int16_t serverTCPPort = 54000;
-    u_int16_t serverUDPPort = 55000;
+    uint16_t serverTCPPort = 54000;
+    uint16_t serverUDPPort = 55000;
 
     asio::ip::tcp::endpoint serverTCPEndpoint(
         asio::ip::make_address(serverIPAddress), serverTCPPort
@@ -50,12 +54,12 @@ int main(int argc, char* argv[])
 
     NetworkClient::Config networkClientConfig{
         .serverUDPEndpoint = serverUDPEndpoint,
-        .pingTransport = Constants::TransportType::UDP
+        .pingTransport = opts.transport
     };
 
     GameClient::Config gameClientConfig{
         // NOTE: Must match server's transport type
-        .transportForPlayerStateUpdates = Constants::TransportType::UDP
+        .transportForPlayerStateUpdates = opts.transport
     };
 
 
@@ -65,15 +69,21 @@ int main(int argc, char* argv[])
     asio::io_context ioContext;
     IOContextRunner runner(ioContext);
 
-    auto client = initClient(serverTCPEndpoint,
-                             networkClientConfig,
-                             gameClientConfig,
-                             ioContext);
+    try
+    {
+        auto client = initClient(serverTCPEndpoint,
+                                networkClientConfig,
+                                gameClientConfig,
+                                ioContext);
 
-
-    LOG_INFO("Client initialized, calling run()");
-    client->run();
-
+        LOG_INFO("Client initialized, calling run()");
+        client->run();
+    }
+    catch (const std::exception& e)
+    {
+        LOG_ERROR("%s", e.what());
+        return 1;
+    }
 
     LOG_INFO("Client shutting down");
     return 0;

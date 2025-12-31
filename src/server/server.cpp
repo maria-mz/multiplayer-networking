@@ -3,14 +3,16 @@
 #include <chrono>
 #include <csignal>
 
-#include "../common/Logging.h"
+#include "cli.h"
 
-#include "../networking/tcp/TCPListener.h"
-#include "../networking/udp/UDPTransport.h"
-#include "../networking/NetworkUtils.h"
+#include "../../common/Logging.h"
 
-#include "../game/GameServer.h"
-#include "../game/NetworkServer.h"
+#include "../../networking/tcp/TCPListener.h"
+#include "../../networking/udp/UDPTransport.h"
+#include "../../networking/NetworkUtils.h"
+
+#include "../../game/GameServer.h"
+#include "../../game/NetworkServer.h"
 
 
 std::atomic<bool> running(true);
@@ -38,15 +40,17 @@ std::unique_ptr<GameServer> initServer(u_int16_t tcpPort,
 }
 
 
-int main()
+int main(int argc, char* argv[])
 {
     // Configuration
+    CLIOptions opts = parseArgs(argc, argv);
+
     u_int16_t tcpPort = 54000;
     u_int16_t udpPort = 55000;
 
     GameServer::Config gameServerConfig{
         // Must match client's transport type
-        .transportForPlayerStateUpdates = Constants::TransportType::TCP
+        .transportForPlayerStateUpdates = opts.transport
     };
 
 
