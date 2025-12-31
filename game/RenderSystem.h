@@ -6,8 +6,8 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 
-#include "../common/Logging.h"
-#include "../ui/Text.h"
+#include "common/Logging.h"
+#include "ui/Text.h"
 
 #include "Player.h"
 #include "FontManager.h"

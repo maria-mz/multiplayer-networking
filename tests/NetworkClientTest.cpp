@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "../game/NetworkClient.h"
-#include "../game/GameClient.h"
-#include "../game/GameServer.h"
+#include "game/NetworkClient.h"
+#include "game/GameClient.h"
+#include "game/GameServer.h"
 
 #include "TestUtils.h"
 

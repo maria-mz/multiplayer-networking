@@ -4,7 +4,7 @@
 #include <format>
 #include <cassert>
 
-#include "../common/Logging.h"
+#include "common/Logging.h"
 
 #include "Player.h"
 #include "Message.h"

@@ -6,7 +6,7 @@
 #include <mutex>
 #include <queue>
 
-#include "../../common/Logging.h"
+#include "common/Logging.h"
 #include "TCPConnection.h"
 #include "TCPMessage.h"
 #include "TCPListenerInterface.h"

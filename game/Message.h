@@ -2,8 +2,8 @@
 
 #include "Player.h"
 
-#include "../networking/tcp/TCPMessage.h"
-#include "../networking/udp/UDPMessage.h"
+#include "networking/tcp/TCPMessage.h"
+#include "networking/udp/UDPMessage.h"
 
 enum class MessageType : uint8_t
 {

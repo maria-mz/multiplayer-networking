@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <asio.hpp>
 
-#include "../networking/udp/UDPTransport.h"
-#include "../networking/NetworkUtils.h"
+#include "networking/udp/UDPTransport.h"
+#include "networking/NetworkUtils.h"
 
 #include "TestUtils.h"
 

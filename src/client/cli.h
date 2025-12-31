@@ -3,8 +3,8 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "../../common/Utils.h"
-#include "../../common/Constants.h"
+#include "common/Utils.h"
+#include "common/Constants.h"
 
 
 struct CLIOptions

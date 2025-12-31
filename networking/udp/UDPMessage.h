@@ -3,9 +3,11 @@
 #include <cassert>
 #include <format>
 #include <cstring>
+#include <cstdint>
 
 
 const size_t MAX_UDP_BYTES_PER_MESSAGE = 128;
+const size_t SEQUENCE_NUMBER_SIZE = sizeof(uint32_t);
 
 struct UDPDataBuffer
 {

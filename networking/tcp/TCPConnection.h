@@ -6,8 +6,8 @@
 
 #include <asio.hpp>
 
-#include "../../common/Logging.h"
-#include "../../common/TSQueue.h"
+#include "common/Logging.h"
+#include "common/TSQueue.h"
 #include "TCPMessage.h"
 #include "TCPConnectionInterface.h"
 

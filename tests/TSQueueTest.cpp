@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "../common/TSQueue.h"
+#include "common/TSQueue.h"
 
 
 TEST(TSQueueTest, BasicFIFO)

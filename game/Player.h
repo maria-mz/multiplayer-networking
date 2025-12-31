@@ -5,8 +5,8 @@
 
 #include "SDL2/SDL.h"
 
-#include "../common/Constants.h"
-#include "../common/Vector2D.h"
+#include "common/Constants.h"
+#include "common/Vector2D.h"
 
 #include "Event.h"
 

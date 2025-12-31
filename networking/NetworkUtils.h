@@ -1,7 +1,7 @@
 #include <asio.hpp>
 #include <thread>
 
-#include "../common/Logging.h"
+#include "common/Logging.h"
 
 #include "tcp/TCPConnection.h"
 

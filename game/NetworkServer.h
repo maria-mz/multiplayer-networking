@@ -2,14 +2,14 @@
 
 #include <unordered_map>
 
-#include "../common/Constants.h"
-#include "../common/Logging.h"
+#include "common/Constants.h"
+#include "common/Logging.h"
 
-#include "../networking/tcp/TCPListenerInterface.h"
-#include "../networking/tcp/TCPConnectionInterface.h"
-#include "../networking/tcp/TCPMessage.h"
-#include "../networking/udp/UDPTransportInterface.h"
-#include "../networking/udp/UDPMessage.h"
+#include "networking/tcp/TCPListenerInterface.h"
+#include "networking/tcp/TCPConnectionInterface.h"
+#include "networking/tcp/TCPMessage.h"
+#include "networking/udp/UDPTransportInterface.h"
+#include "networking/udp/UDPMessage.h"
 
 #include "Message.h"
 

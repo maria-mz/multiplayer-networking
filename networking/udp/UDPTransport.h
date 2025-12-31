@@ -7,8 +7,8 @@
 
 #include <asio.hpp>
 
-#include "../../common/Logging.h"
-#include "../../common/TSQueue.h"
+#include "common/Logging.h"
+#include "common/TSQueue.h"
 #include "UDPMessage.h"
 #include "UDPTransportInterface.h"
 

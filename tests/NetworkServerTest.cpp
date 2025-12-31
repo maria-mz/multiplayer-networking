@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "../game/NetworkServer.h"
+#include "game/NetworkServer.h"
 #include "TestUtils.h"
 
 

@@ -2,10 +2,10 @@
 
 #include <unordered_map>
 
-#include "../common/Constants.h"
+#include "common/Constants.h"
 
-#include "../networking/tcp/TCPMessage.h"
-#include "../networking/udp/UDPMessage.h"
+#include "networking/tcp/TCPMessage.h"
+#include "networking/udp/UDPMessage.h"
 
 #include "NetworkServer.h"
 

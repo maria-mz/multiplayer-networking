@@ -7,14 +7,14 @@
 #include <cassert>
 #include <chrono>
 
-#include "../common/Utils.h"
-#include "../common/Constants.h"
-#include "../common/Logging.h"
+#include "common/Utils.h"
+#include "common/Constants.h"
+#include "common/Logging.h"
 
-#include "../networking/tcp/TCPConnectionInterface.h"
-#include "../networking/tcp/TCPMessage.h"
-#include "../networking/udp/UDPTransportInterface.h"
-#include "../networking/udp/UDPMessage.h"
+#include "networking/tcp/TCPConnectionInterface.h"
+#include "networking/tcp/TCPMessage.h"
+#include "networking/udp/UDPTransportInterface.h"
+#include "networking/udp/UDPMessage.h"
 
 #include "Message.h"
 

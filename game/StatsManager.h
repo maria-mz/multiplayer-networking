@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <cmath>
-#include "../common/Logging.h"
+#include "common/Logging.h"
 
 class StatsManager
 {

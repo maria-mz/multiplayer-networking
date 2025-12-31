@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 #include <asio.hpp>
 
-#include "../networking/tcp/TCPConnection.h"
-#include "../networking/tcp/TCPListener.h"
-#include "../networking/NetworkUtils.h"
+#include "networking/tcp/TCPConnection.h"
+#include "networking/tcp/TCPListener.h"
+#include "networking/NetworkUtils.h"
 
 #include "TestUtils.h"
 

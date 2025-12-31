@@ -3,17 +3,16 @@ add_library(game_core
   ${CMAKE_SOURCE_DIR}/game/Player.cpp
 )
 target_include_directories(game_core PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/common
-  ${CMAKE_CURRENT_SOURCE_DIR}/game
-  ${CMAKE_CURRENT_SOURCE_DIR}/networking
-  ${CMAKE_CURRENT_SOURCE_DIR}/ui
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils
+  ${CMAKE_SOURCE_DIR}
 )
 
 # Client executable
 if (BUILD_CLIENT)
   add_executable(client
       client/client.cpp
+  )
+  target_include_directories(client PRIVATE
+    ${CMAKE_SOURCE_DIR}
   )
   find_package(SDL2 REQUIRED)
   find_package(SDL2_ttf REQUIRED)
@@ -30,6 +29,9 @@ endif()
 if (BUILD_SERVER)
   add_executable(server
     server/server.cpp
+  )
+  target_include_directories(server PRIVATE
+    ${CMAKE_SOURCE_DIR}
   )
   target_link_libraries(server PRIVATE
     game_core

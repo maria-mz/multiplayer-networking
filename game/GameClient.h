@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../common/Constants.h"
-#include "../common/Utils.h"
+#include "common/Constants.h"
+#include "common/Utils.h"
 
 #include "NetworkClient.h"
 #include "RenderSystem.h"
