@@ -62,15 +62,14 @@ int main(int argc, char* argv[])
         .transportForPlayerStateUpdates = opts.transport
     };
 
-
-    LOG_INFO("Initializing client");
-
-    // Start IO context for ASIO async networking tasks
-    asio::io_context ioContext;
-    IOContextRunner runner(ioContext);
-
     try
     {
+        LOG_INFO("Initializing client");
+
+        // Start IO context for ASIO async networking tasks
+        asio::io_context ioContext;
+        IOContextRunner runner(ioContext);
+
         auto client = initClient(serverTCPEndpoint,
                                 networkClientConfig,
                                 gameClientConfig,

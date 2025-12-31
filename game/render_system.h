@@ -243,7 +243,6 @@ class RenderSystem
         {
             assert(m_renderer != nullptr);
 
-            const int padding = 8;
             const int startX = 10;
             const int startY = 10;
             const int lineSpacing = 2;
@@ -253,7 +252,9 @@ class RenderSystem
             std::string pingText = ping.has_value() ? std::format("{:.0f}", *ping) : "--";
 
             lines.push_back(std::format("Transport: {}", transportTypeToString(transportType)));
+            lines.push_back("");
             lines.push_back(std::format("Ping: {} ms", pingText));
+            lines.push_back("");
             lines.push_back(std::format("Updates per frame (CV): {:.2f}", updatesPerFrameCV));
             lines.push_back("");
 

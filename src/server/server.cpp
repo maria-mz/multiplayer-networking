@@ -53,29 +53,35 @@ int main(int argc, char* argv[])
         .transportForPlayerStateUpdates = opts.transport
     };
 
-
-    LOG_INFO("Initializing server");
-
-    // Start IO context for ASIO async networking tasks
-    asio::io_context ioContext;
-    IOContextRunner runner(ioContext);
-
-    auto server = initServer(tcpPort,
-                             udpPort,
-                             gameServerConfig,
-                             ioContext);
-
-    std::signal(SIGINT, signalHandler);
-
-
-    LOG_INFO("Server initialized, starting update loop");
-
-    while (running)
+    try
     {
-        server->update();
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    }
+        LOG_INFO("Initializing server");
 
+        // Start IO context for ASIO async networking tasks
+        asio::io_context ioContext;
+        IOContextRunner runner(ioContext);
+
+        auto server = initServer(tcpPort,
+                                udpPort,
+                                gameServerConfig,
+                                ioContext);
+
+        std::signal(SIGINT, signalHandler);
+
+
+        LOG_INFO("Server initialized, starting update loop");
+
+        while (running)
+        {
+            server->update();
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+    }
+    catch (const std::exception& e)
+    {
+        LOG_ERROR("%s", e.what());
+        return 1;
+    }
 
     LOG_INFO("Server shutting down");
     return 0;

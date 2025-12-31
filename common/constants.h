@@ -6,7 +6,7 @@
 namespace constants
 {
     // Window
-    constexpr const char* WINDOW_TITLE = "Multiplayer Networking Simulator";
+    constexpr const char* WINDOW_TITLE = "Multiplayer Networking";
     constexpr int WINDOW_WIDTH = 720;
     constexpr int WINDOW_HEIGHT = 480;
 
