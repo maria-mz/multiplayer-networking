@@ -8,6 +8,7 @@
 #include "InputSystem.h"
 #include "GameSimulation.h"
 #include "FrameTimer.h"
+#include "StatsManager.h"
 
 
 class GameClient
@@ -22,7 +23,8 @@ class GameClient
         };
 
     public:
-        GameClient(Config config, std::shared_ptr<NetworkClient> networkClient)
+        GameClient(Config config,
+                   std::shared_ptr<NetworkClient> networkClient)
         : m_config(config)
         , m_networkClient(networkClient)
         {
@@ -65,6 +67,8 @@ class GameClient
             bool shouldQuit = false;
             FrameTimer frameTimer(GAME_TICK_RATE_MS);
 
+            int remotePlayerUpdatesThisFrame = 0;
+
             std::vector<Message> inMessages{};
 
             while (!shouldQuit && isConnected())
@@ -90,17 +94,29 @@ class GameClient
                     }
                 }
 
-                m_gameSimulation.applyIncomingMessages(incomingMessages);
+                for (const auto& inMessage : incomingMessages)
+                {
+                    if (inMessage.type == MessageType::PlayerStateUpdate)
+                    {
+                        remotePlayerUpdatesThisFrame++;
+                    }
+                    m_gameSimulation.applyIncomingMessage(inMessage);
+                }
+
                 m_gameSimulation.updateSimulation(frameTimer.getDeltaTime());
 
                 auto outgoingMessages = m_gameSimulation.collectOutgoingMessages();
                 pumpSend(outgoingMessages);
 
+                m_statsManager.pushUpdatesPerFrameSample(remotePlayerUpdatesThisFrame);
+
                 m_renderSystem.renderGame(m_gameSimulation,
                                           m_networkClient->getPingMs(),
+                                          m_statsManager.computeUpdatesPerFrameCV(),
                                           m_config.transportForPlayerStateUpdates);
 
                 frameTimer.endFrame();
+                remotePlayerUpdatesThisFrame = 0; // reset count
             }
         }
 
@@ -166,6 +182,7 @@ class GameClient
         RenderSystem m_renderSystem;
         GameSimulation m_gameSimulation;
         InputSystem m_inputSystem;
+        StatsManager m_statsManager;
 
         PlayerID m_localPlayerID;
 

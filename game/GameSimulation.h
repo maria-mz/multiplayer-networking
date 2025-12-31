@@ -80,24 +80,21 @@ class GameSimulation
             }
         }
 
-        void applyIncomingMessages(const std::vector<Message>& inMessages)
+        void applyIncomingMessage(const Message& message)
         {
-            for (const auto& msg : inMessages)
+            switch (message.type)
             {
-                switch (msg.type)
-                {
-                    case MessageType::PlayerJoined:
-                        handlePlayerJoinedMessage(msg.data.playerJoined);
-                        break;
-                    case MessageType::PlayerLeft:
-                        handlePlayerLeftMessage(msg.data.playerLeft);
-                        break;
-                    case MessageType::PlayerStateUpdate:
-                        handlePlayerStateUpdateMessage(msg.data.playerStateUpdate);
-                        break;
-                    default:
-                        break;
-                }
+                case MessageType::PlayerJoined:
+                    handlePlayerJoinedMessage(message.data.playerJoined);
+                    break;
+                case MessageType::PlayerLeft:
+                    handlePlayerLeftMessage(message.data.playerLeft);
+                    break;
+                case MessageType::PlayerStateUpdate:
+                    handlePlayerStateUpdateMessage(message.data.playerStateUpdate);
+                    break;
+                default:
+                    break;
             }
         }
 
