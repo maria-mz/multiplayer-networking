@@ -7,10 +7,10 @@
 
 #include <asio.hpp>
 
-#include "common/Logging.h"
-#include "common/TSQueue.h"
-#include "UDPMessage.h"
-#include "UDPTransportInterface.h"
+#include "common/logging.h"
+#include "common/thread_safe_queue.h"
+#include "udp_message.h"
+#include "udp_transport_interface.h"
 
 
 class UDPTransport
@@ -172,7 +172,7 @@ class UDPTransport
 
     private:
         asio::ip::udp::socket m_socket;
-        TSQueue<std::pair<UDPMessage, asio::ip::udp::endpoint>> m_inMessages;
+        ThreadSafeQueue<std::pair<UDPMessage, asio::ip::udp::endpoint>> m_inMessages;
 
         UDPMessage m_recvMsg;
         asio::ip::udp::endpoint m_recvSender;

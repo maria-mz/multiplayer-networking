@@ -5,14 +5,14 @@
 
 #include "cli.h"
 
-#include "common/Logging.h"
+#include "common/logging.h"
 
-#include "networking/tcp/TCPListener.h"
-#include "networking/udp/UDPTransport.h"
-#include "networking/NetworkUtils.h"
+#include "networking/tcp/tcp_listener.h"
+#include "networking/udp/udp_transport.h"
+#include "networking/utils.h"
 
-#include "game/GameServer.h"
-#include "game/NetworkServer.h"
+#include "game/game_server.h"
+#include "game/network_server.h"
 
 
 std::atomic<bool> running(true);

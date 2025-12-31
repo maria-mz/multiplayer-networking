@@ -5,10 +5,10 @@
 
 #include "SDL2/SDL.h"
 
-#include "common/Constants.h"
-#include "common/Vector2D.h"
+#include "common/constants.h"
+#include "common/vector_2d.h"
 
-#include "Event.h"
+#include "event.h"
 
 class InputManager
 {

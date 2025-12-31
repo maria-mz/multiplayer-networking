@@ -1,7 +1,7 @@
 #pragma once
 
 #include <asio.hpp>
-#include "UDPMessage.h"
+#include "udp_message.h"
 
 class UDPTransportInterface
 {

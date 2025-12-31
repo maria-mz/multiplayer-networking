@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "game/NetworkServer.h"
-#include "TestUtils.h"
+#include "game/network_server.h"
+#include "utils.h"
 
 
 class NetworkServerTest : public ::testing::Test
@@ -132,7 +132,7 @@ TEST_F(NetworkServerTest, CanSendTCPMessage)
     Message msg{ .type = MessageType::PlayerLeft };
 
     ASSERT_EQ(tcpConn->sent.size(), 0u);
-    server->queueOutgoingMessage(tcpConn->getID(), msg, Constants::TransportType::TCP);
+    server->queueOutgoingMessage(tcpConn->getID(), msg, constants::TransportType::TCP);
     ASSERT_EQ(tcpConn->sent.size(), 0u);
 
     server->pumpSend();
@@ -149,7 +149,7 @@ TEST_F(NetworkServerTest, CanSendUDPMessage)
     Message msg{ .type = MessageType::PlayerLeft };
 
     ASSERT_EQ(udpTransport->sent.size(), 0u);
-    server->queueOutgoingMessage(tcpConn->getID(), msg, Constants::TransportType::UDP);
+    server->queueOutgoingMessage(tcpConn->getID(), msg, constants::TransportType::UDP);
     ASSERT_EQ(udpTransport->sent.size(), 0u);
 
     server->pumpSend();
@@ -203,8 +203,8 @@ TEST_F(NetworkServerTest, QueueMessageForNonExistentClient)
     Message msg{ .type = MessageType::PlayerLeft };
 
     // Should not crash or send
-    server->queueOutgoingMessage(9999, msg, Constants::TransportType::TCP);
-    server->queueOutgoingMessage(9999, msg, Constants::TransportType::UDP);
+    server->queueOutgoingMessage(9999, msg, constants::TransportType::TCP);
+    server->queueOutgoingMessage(9999, msg, constants::TransportType::UDP);
 
     server->pumpSend();
 
@@ -314,8 +314,8 @@ TEST_F(NetworkServerTest, PreservesMessageQueueOrder)
     Message msg1{ .type = MessageType::PlayerJoined };
     Message msg2{ .type = MessageType::PlayerLeft };
 
-    server->queueOutgoingMessage(tcpConn->getID(), msg1, Constants::TransportType::TCP);
-    server->queueOutgoingMessage(tcpConn->getID(), msg2, Constants::TransportType::TCP);
+    server->queueOutgoingMessage(tcpConn->getID(), msg1, constants::TransportType::TCP);
+    server->queueOutgoingMessage(tcpConn->getID(), msg2, constants::TransportType::TCP);
 
     ASSERT_EQ(tcpConn->sent.size(), 0u);
 
@@ -345,7 +345,7 @@ TEST_F(NetworkServerTest, UDPBindFailsWithInvalidToken)
     // Client should still be in BindingUDP state (not connected)
     server->queueOutgoingMessage(tcpConn->getID(),
                                  Message{.type = MessageType::PlayerJoined},
-                                 Constants::TransportType::UDP);
+                                 constants::TransportType::UDP);
     server->pumpSend();
 
     // No UDP message should be sent

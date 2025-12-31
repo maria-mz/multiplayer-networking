@@ -2,12 +2,12 @@
 
 #include <queue>
 
-#include "networking/tcp/TCPListenerInterface.h"
-#include "networking/tcp/TCPConnectionInterface.h"
-#include "networking/tcp/TCPMessage.h"
+#include "networking/tcp/tcp_listener_interface.h"
+#include "networking/tcp/tcp_connection_interface.h"
+#include "networking/tcp/tcp_message.h"
 
-#include "networking/udp/UDPTransportInterface.h"
-#include "networking/udp/UDPMessage.h"
+#include "networking/udp/udp_transport_interface.h"
+#include "networking/udp/udp_message.h"
 
 
 class MockTCPConnection : public TCPConnectionInterface

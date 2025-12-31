@@ -1,9 +1,9 @@
 #include <asio.hpp>
 #include <thread>
 
-#include "common/Logging.h"
+#include "common/logging.h"
 
-#include "tcp/TCPConnection.h"
+#include "tcp/tcp_connection.h"
 
 class IOContextRunner
 {

@@ -6,12 +6,12 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 
-#include "common/Logging.h"
-#include "ui/Text.h"
+#include "common/logging.h"
+#include "ui/text.h"
 
-#include "Player.h"
-#include "FontManager.h"
-#include "GameSimulation.h"
+#include "player.h"
+#include "font_manager.h"
+#include "game_simulation.h"
 
 
 class RenderSystem
@@ -53,13 +53,13 @@ class RenderSystem
             if (success)
             {
                 m_playerLabelAttributes.font = m_fontManager.getFont(
-                    Constants::FILE_FONT_MAIN.c_str(), 14
+                    constants::FILE_FONT_MAIN.c_str(), 14
                 );
                 m_playerLabelAttributes.color = {0, 0, 0, 255};
                 m_playerLabelAttributes.outlinePx = 0;
 
                 m_hudTextAttributes.font = m_fontManager.getFont(
-                    Constants::FILE_FONT_MAIN.c_str(), 14
+                    constants::FILE_FONT_MAIN.c_str(), 14
                 );
                 m_hudTextAttributes.color = {0, 0, 0, 255};
                 m_hudTextAttributes.outlinePx = 0;
@@ -71,7 +71,7 @@ class RenderSystem
         void renderGame(GameSimulation& gameSimulation,
                         std::optional<float> ping,
                         double updatesPerFrameCV,
-                        Constants::TransportType transportType)
+                        constants::TransportType transportType)
         {
             assert(m_renderer != nullptr);
 
@@ -102,11 +102,11 @@ class RenderSystem
             }
             else
             {
-                m_window = SDL_CreateWindow(Constants::WINDOW_TITLE,
+                m_window = SDL_CreateWindow(constants::WINDOW_TITLE,
                                         SDL_WINDOWPOS_UNDEFINED,
                                         SDL_WINDOWPOS_UNDEFINED,
-                                        Constants::WINDOW_WIDTH,
-                                        Constants::WINDOW_HEIGHT,
+                                        constants::WINDOW_WIDTH,
+                                        constants::WINDOW_HEIGHT,
                                         SDL_WINDOW_SHOWN);
 
                 if (m_window == nullptr)
@@ -157,9 +157,9 @@ class RenderSystem
             bool success = true;
 
             if (
-                !m_fontManager.loadFont(Constants::FILE_FONT_MAIN.c_str(), 8) ||
-                !m_fontManager.loadFont(Constants::FILE_FONT_MAIN.c_str(), 12) ||
-                !m_fontManager.loadFont(Constants::FILE_FONT_MAIN.c_str(), 14)
+                !m_fontManager.loadFont(constants::FILE_FONT_MAIN.c_str(), 8) ||
+                !m_fontManager.loadFont(constants::FILE_FONT_MAIN.c_str(), 12) ||
+                !m_fontManager.loadFont(constants::FILE_FONT_MAIN.c_str(), 14)
             )
             {
                 success = false;
@@ -214,23 +214,23 @@ class RenderSystem
             SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
 
             // Draw vertical lines
-            for (int x = 0; x <= Constants::WINDOW_WIDTH; x += GRID_SPACING)
+            for (int x = 0; x <= constants::WINDOW_WIDTH; x += GRID_SPACING)
             {
                 bool isMajor = ((x / GRID_SPACING) % MAJOR_LINE_EVERY) == 0;
                 SDL_Color c = isMajor ? majorColor : minorColor;
 
                 SDL_SetRenderDrawColor(m_renderer, c.r, c.g, c.b, c.a);
-                SDL_RenderDrawLine(m_renderer, x, 0, x, Constants::WINDOW_HEIGHT);
+                SDL_RenderDrawLine(m_renderer, x, 0, x, constants::WINDOW_HEIGHT);
             }
 
             // Draw horizontal lines
-            for (int y = 0; y <= Constants::WINDOW_HEIGHT; y += GRID_SPACING)
+            for (int y = 0; y <= constants::WINDOW_HEIGHT; y += GRID_SPACING)
             {
                 bool isMajor = ((y / GRID_SPACING) % MAJOR_LINE_EVERY) == 0;
                 SDL_Color c = isMajor ? majorColor : minorColor;
 
                 SDL_SetRenderDrawColor(m_renderer, c.r, c.g, c.b, c.a);
-                SDL_RenderDrawLine(m_renderer, 0, y, Constants::WINDOW_WIDTH, y);
+                SDL_RenderDrawLine(m_renderer, 0, y, constants::WINDOW_WIDTH, y);
             }
 
             SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_NONE);
@@ -239,7 +239,7 @@ class RenderSystem
         void renderHUD(GameSimulation& gameSimulation,
                        std::optional<float> ping,
                        double updatesPerFrameCV,
-                       Constants::TransportType transportType)
+                       constants::TransportType transportType)
         {
             assert(m_renderer != nullptr);
 
@@ -307,12 +307,12 @@ class RenderSystem
             SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_NONE);
         }
 
-        std::string transportTypeToString(Constants::TransportType t)
+        std::string transportTypeToString(constants::TransportType t)
         {
             switch (t)
             {
-                case Constants::TransportType::TCP:  return "TCP";
-                case Constants::TransportType::UDP:  return "UDP";
+                case constants::TransportType::TCP:  return "TCP";
+                case constants::TransportType::UDP:  return "UDP";
                 default: return "Unknown";
             }
         }

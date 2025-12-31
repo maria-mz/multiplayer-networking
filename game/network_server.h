@@ -2,16 +2,16 @@
 
 #include <unordered_map>
 
-#include "common/Constants.h"
-#include "common/Logging.h"
+#include "common/constants.h"
+#include "common/logging.h"
 
-#include "networking/tcp/TCPListenerInterface.h"
-#include "networking/tcp/TCPConnectionInterface.h"
-#include "networking/tcp/TCPMessage.h"
-#include "networking/udp/UDPTransportInterface.h"
-#include "networking/udp/UDPMessage.h"
+#include "networking/tcp/tcp_listener_interface.h"
+#include "networking/tcp/tcp_connection_interface.h"
+#include "networking/tcp/tcp_message.h"
+#include "networking/udp/udp_transport_interface.h"
+#include "networking/udp/udp_message.h"
 
-#include "Message.h"
+#include "message.h"
 
 // Hash specialization so udp endpoint can be used as a key in endpoint -> clientID lookup map
 namespace std
@@ -91,7 +91,7 @@ class NetworkServer
 
         void queueOutgoingMessage(ClientID clientID,
                                  const Message& message,
-                                 Constants::TransportType transportType)
+                                 constants::TransportType transportType)
         {
             auto it = m_clients.find(clientID);
             if (it == m_clients.end())
@@ -105,7 +105,7 @@ class NetworkServer
         }
 
         void queueBroadcast(const Message& message,
-                            Constants::TransportType transportType,
+                            constants::TransportType transportType,
                             std::optional<ClientID> ignoreClientID)
         {
             for (auto& [clientID, client] : m_clients)
@@ -144,7 +144,7 @@ class NetworkServer
                 {
                     dispatchIncomingMessage(client,
                                             fromTCPMessage(tcpMessage),
-                                            Constants::TransportType::TCP);
+                                            constants::TransportType::TCP);
                 }
             }
 
@@ -161,7 +161,7 @@ class NetworkServer
                 {
                     dispatchIncomingMessage(m_clients[it->second],
                                             message,
-                                            Constants::TransportType::UDP);
+                                            constants::TransportType::UDP);
                 }
                 else if (message.type == MessageType::UDPBind)
                 {
@@ -331,7 +331,7 @@ class NetworkServer
 
         void dispatchIncomingMessage(NetworkClient& client,
                                     const Message& message,
-                                    Constants::TransportType transport)
+                                    constants::TransportType transport)
         {
             if (message.type == MessageType::Ping)
             {
@@ -345,7 +345,7 @@ class NetworkServer
 
         void handlePing(NetworkClient& client,
                         const Ping& pingMessage,
-                        Constants::TransportType pingTransport)
+                        constants::TransportType pingTransport)
         {
             Message pongMsg{
                 .type = MessageType::Pong,
@@ -385,14 +385,14 @@ class NetworkServer
 
         void queueOutgoingMessage(NetworkClient& client,
                                   const Message& message,
-                                  Constants::TransportType transportType)
+                                  constants::TransportType transportType)
         {
             switch (transportType)
             {
-                case Constants::TransportType::TCP:
+                case constants::TransportType::TCP:
                     client.tcpOutbox.push_back(toTCPMessage(message));
                     break;
-                case Constants::TransportType::UDP:
+                case constants::TransportType::UDP:
                     client.udpOutbox.push_back(toUDPMessage(message));
                     break;
                 default:

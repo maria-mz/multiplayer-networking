@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
-#include "common/TSQueue.h"
+#include "common/thread_safe_queue.h"
 
 
-TEST(TSQueueTest, BasicFIFO)
+TEST(ThreadSafeQueueTest, BasicFIFO)
 {
-    TSQueue<int> tsQueue;
+    ThreadSafeQueue<int> tsQueue;
 
     tsQueue.push(1);
     tsQueue.push(2);

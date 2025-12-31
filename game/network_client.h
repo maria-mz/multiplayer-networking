@@ -7,16 +7,16 @@
 #include <cassert>
 #include <chrono>
 
-#include "common/Utils.h"
-#include "common/Constants.h"
-#include "common/Logging.h"
+#include "common/utils.h"
+#include "common/constants.h"
+#include "common/logging.h"
 
-#include "networking/tcp/TCPConnectionInterface.h"
-#include "networking/tcp/TCPMessage.h"
-#include "networking/udp/UDPTransportInterface.h"
-#include "networking/udp/UDPMessage.h"
+#include "networking/tcp/tcp_connection_interface.h"
+#include "networking/tcp/tcp_message.h"
+#include "networking/udp/udp_transport_interface.h"
+#include "networking/udp/udp_message.h"
 
-#include "Message.h"
+#include "message.h"
 
 class NetworkClient
 {
@@ -33,7 +33,7 @@ class NetworkClient
 
             bool enablePing = true;
             std::chrono::milliseconds pingInterval{1000};
-            Constants::TransportType pingTransport = Constants::TransportType::TCP;
+            constants::TransportType pingTransport = constants::TransportType::TCP;
         };
 
     private:
@@ -124,14 +124,14 @@ class NetworkClient
             return vec;
         }
 
-        void queueOutgoingMessage(const Message& message, Constants::TransportType transport)
+        void queueOutgoingMessage(const Message& message, constants::TransportType transport)
         {
             switch (transport)
             {
-                case Constants::TransportType::TCP:
+                case constants::TransportType::TCP:
                     m_tcpOutbox.push_back(toTCPMessage(message));
                     break;
-                case Constants::TransportType::UDP:
+                case constants::TransportType::UDP:
                     m_udpOutbox.push_back(toUDPMessage(message));
                     break;
                 default:

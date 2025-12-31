@@ -3,7 +3,7 @@
 #include <string>
 #include <memory>
 
-namespace Constants
+namespace constants
 {
     // Window
     constexpr const char* WINDOW_TITLE = "Multiplayer Networking Simulator";

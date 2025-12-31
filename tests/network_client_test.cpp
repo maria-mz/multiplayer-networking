@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include "game/NetworkClient.h"
-#include "game/GameClient.h"
-#include "game/GameServer.h"
+#include "game/network_client.h"
+#include "game/game_client.h"
+#include "game/game_server.h"
 
-#include "TestUtils.h"
+#include "utils.h"
 
 
 class NetworkClientTest : public ::testing::Test
@@ -109,7 +109,7 @@ TEST_F(NetworkClientTest, CanSendTCPMessage)
 
     Message tcpMsg{ .type = MessageType::PlayerJoined };
 
-    client->queueOutgoingMessage(tcpMsg, Constants::TransportType::TCP);
+    client->queueOutgoingMessage(tcpMsg, constants::TransportType::TCP);
 
     client->pumpSend();
 
@@ -123,7 +123,7 @@ TEST_F(NetworkClientTest, CanSendUDPMessage)
 
     Message udpMsg{ .type = MessageType::PlayerLeft };
 
-    client->queueOutgoingMessage(udpMsg, Constants::TransportType::UDP);
+    client->queueOutgoingMessage(udpMsg, constants::TransportType::UDP);
 
     client->pumpSend();
 
@@ -189,10 +189,10 @@ TEST_F(NetworkClientTest, PreservesMessageQueueOrder)
     Message udpMsg1{ .type = MessageType::PlayerJoined };
     Message udpMsg2{ .type = MessageType::PlayerLeft };
 
-    client->queueOutgoingMessage(tcpMsg1, Constants::TransportType::TCP);
-    client->queueOutgoingMessage(tcpMsg2, Constants::TransportType::TCP);
-    client->queueOutgoingMessage(udpMsg1, Constants::TransportType::UDP);
-    client->queueOutgoingMessage(udpMsg2, Constants::TransportType::UDP);
+    client->queueOutgoingMessage(tcpMsg1, constants::TransportType::TCP);
+    client->queueOutgoingMessage(tcpMsg2, constants::TransportType::TCP);
+    client->queueOutgoingMessage(udpMsg1, constants::TransportType::UDP);
+    client->queueOutgoingMessage(udpMsg2, constants::TransportType::UDP);
 
     client->pumpSend();
 

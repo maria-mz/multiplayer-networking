@@ -6,11 +6,11 @@
 #include <mutex>
 #include <queue>
 
-#include "common/Logging.h"
-#include "TCPConnection.h"
-#include "TCPMessage.h"
-#include "TCPListenerInterface.h"
-#include "TCPConnectionInterface.h"
+#include "common/logging.h"
+#include "tcp_connection.h"
+#include "tcp_message.h"
+#include "tcp_listener_interface.h"
+#include "tcp_connection_interface.h"
 
 
 class TCPListener
@@ -87,5 +87,5 @@ class TCPListener
         asio::io_context& m_ioContext;
         asio::ip::tcp::acceptor m_acceptor;
 
-        TSQueue<std::shared_ptr<TCPConnection>> m_newConnections;
+        ThreadSafeQueue<std::shared_ptr<TCPConnection>> m_newConnections;
 };

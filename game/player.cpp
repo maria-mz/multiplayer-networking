@@ -1,4 +1,4 @@
-#include "Player.h"
+#include "player.h"
 #include <iostream>
 
 InputManager::InputManager()
@@ -119,8 +119,8 @@ void PlayerStateRun::exit(Player &player)
 Player::Player()
     : m_stateObject(std::make_unique<PlayerStateIdle>()),
       m_transform{WIDTH_PX, WIDTH_PX, 1},
-      m_position{(Constants::WINDOW_WIDTH / 2) - (WIDTH_PX / 2),
-                 (Constants::WINDOW_HEIGHT / 2) - (WIDTH_PX / 2)}
+      m_position{(constants::WINDOW_WIDTH / 2) - (WIDTH_PX / 2),
+                 (constants::WINDOW_HEIGHT / 2) - (WIDTH_PX / 2)}
 {
     m_stateObject->enter(*this);
 }
@@ -190,9 +190,9 @@ void Player::boundPosition()
     {
         m_position.x = 0;
     }
-    else if (boundingBox.x + boundingBox.w > Constants::WINDOW_WIDTH)
+    else if (boundingBox.x + boundingBox.w > constants::WINDOW_WIDTH)
     {
-        m_position.x = Constants::WINDOW_WIDTH - boundingBox.w;
+        m_position.x = constants::WINDOW_WIDTH - boundingBox.w;
     }
 
     // Bound y
@@ -200,8 +200,8 @@ void Player::boundPosition()
     {
         m_position.y = 0;
     }
-    else if (boundingBox.y + boundingBox.h > Constants::WINDOW_HEIGHT)
+    else if (boundingBox.y + boundingBox.h > constants::WINDOW_HEIGHT)
     {
-        m_position.y = Constants::WINDOW_HEIGHT - boundingBox.h;
+        m_position.y = constants::WINDOW_HEIGHT - boundingBox.h;
     }
 }

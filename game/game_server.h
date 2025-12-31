@@ -2,19 +2,19 @@
 
 #include <unordered_map>
 
-#include "common/Constants.h"
+#include "common/constants.h"
 
-#include "networking/tcp/TCPMessage.h"
-#include "networking/udp/UDPMessage.h"
+#include "networking/tcp/tcp_message.h"
+#include "networking/udp/udp_message.h"
 
-#include "NetworkServer.h"
+#include "network_server.h"
 
 class GameServer
 {
     public:
         struct Config
         {
-            Constants::TransportType transportForPlayerStateUpdates = Constants::TransportType::TCP;
+            constants::TransportType transportForPlayerStateUpdates = constants::TransportType::TCP;
         };
 
     public:
@@ -81,10 +81,10 @@ class GameServer
             m_clientIDToPlayerID[connectedClientID] = playerID;
 
             m_networkServer->queueOutgoingMessage(
-                connectedClientID, assignPlayerID, Constants::TransportType::TCP
+                connectedClientID, assignPlayerID, constants::TransportType::TCP
             );
             m_networkServer->queueBroadcast(
-                assignPlayerID, Constants::TransportType::TCP, connectedClientID
+                assignPlayerID, constants::TransportType::TCP, connectedClientID
             );
         };
 
@@ -102,7 +102,7 @@ class GameServer
             };
 
             m_networkServer->queueBroadcast(
-                playerLeftMsg, Constants::TransportType::TCP, disconnectedClientID
+                playerLeftMsg, constants::TransportType::TCP, disconnectedClientID
             );
         };
 

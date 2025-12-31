@@ -1,14 +1,14 @@
 #pragma once
 
-#include "common/Constants.h"
-#include "common/Utils.h"
+#include "common/constants.h"
+#include "common/utils.h"
 
-#include "NetworkClient.h"
-#include "RenderSystem.h"
-#include "InputSystem.h"
-#include "GameSimulation.h"
-#include "FrameTimer.h"
-#include "StatsManager.h"
+#include "network_client.h"
+#include "render_system.h"
+#include "input_system.h"
+#include "game_simulation.h"
+#include "frame_timer.h"
+#include "stats_manager.h"
 
 
 class GameClient
@@ -16,7 +16,7 @@ class GameClient
     public:
         struct Config
         {
-            Constants::TransportType transportForPlayerStateUpdates = Constants::TransportType::TCP;
+            constants::TransportType transportForPlayerStateUpdates = constants::TransportType::TCP;
 
             int assignPlayerIDTimeoutMs      = 3000;
             int assignPlayerIDPollIntervalMs = 50;
@@ -163,7 +163,7 @@ class GameClient
                 else
                 {
                     m_networkClient->queueOutgoingMessage(
-                        outMsg, Constants::TransportType::TCP
+                        outMsg, constants::TransportType::TCP
                     );
                 }
             }

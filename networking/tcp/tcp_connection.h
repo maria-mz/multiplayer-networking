@@ -6,10 +6,10 @@
 
 #include <asio.hpp>
 
-#include "common/Logging.h"
-#include "common/TSQueue.h"
-#include "TCPMessage.h"
-#include "TCPConnectionInterface.h"
+#include "common/logging.h"
+#include "common/thread_safe_queue.h"
+#include "tcp_message.h"
+#include "tcp_connection_interface.h"
 
 
 // Note: Uses self = shared_from_this() inside async handlers instead of *this*
@@ -267,8 +267,8 @@ class TCPConnection
         TCPMessage m_currentMsgIn;
         TCPMessage m_currentMsgOut;
 
-        TSQueue<TCPMessage> m_inMessages;
-        TSQueue<TCPMessage> m_outMessages;
+        ThreadSafeQueue<TCPMessage> m_inMessages;
+        ThreadSafeQueue<TCPMessage> m_outMessages;
 
         asio::io_context& m_ioContext;
         asio::ip::tcp::socket m_socket;

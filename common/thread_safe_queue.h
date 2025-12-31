@@ -4,7 +4,7 @@
 #include <optional>
 
 template <typename T>
-class TSQueue
+class ThreadSafeQueue
 {
     public:
         void push(T item)

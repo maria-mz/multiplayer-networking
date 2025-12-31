@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TCPMessage.h"
+#include "tcp_message.h"
 
 class TCPConnectionInterface
 {

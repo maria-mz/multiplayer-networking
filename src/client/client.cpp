@@ -5,13 +5,13 @@
 
 #include "cli.h"
 
-#include "common/Logging.h"
-#include "networking/tcp/TCPConnection.h"
-#include "networking/udp/UDPTransport.h"
-#include "networking/NetworkUtils.h"
+#include "common/logging.h"
+#include "networking/tcp/tcp_connection.h"
+#include "networking/udp/udp_transport.h"
+#include "networking/utils.h"
 
-#include "game/GameClient.h"
-#include "game/NetworkClient.h"
+#include "game/game_client.h"
+#include "game/network_client.h"
 
 
 std::unique_ptr<GameClient> initClient(asio::ip::tcp::endpoint serverTCPEndpoint,

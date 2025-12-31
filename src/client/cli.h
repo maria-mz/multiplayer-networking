@@ -3,13 +3,13 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "common/Utils.h"
-#include "common/Constants.h"
+#include "common/utils.h"
+#include "common/constants.h"
 
 
 struct CLIOptions
 {
-    Constants::TransportType transport = Constants::TransportType::UDP;
+    constants::TransportType transport = constants::TransportType::UDP;
 };
 
 inline void printHelp()
@@ -20,12 +20,12 @@ inline void printHelp()
         "  --transport=<udp|tcp>     Transport type (default: udp)\n";
 }
 
-inline Constants::TransportType parseTransportType(const std::string& arg)
+inline constants::TransportType parseTransportType(const std::string& arg)
 {
     if (iequals(arg, "udp"))
-        return Constants::TransportType::UDP;
+        return constants::TransportType::UDP;
     if (iequals(arg, "tcp"))
-        return Constants::TransportType::TCP;
+        return constants::TransportType::TCP;
 
     printHelp();
     std::exit(1);

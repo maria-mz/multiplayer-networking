@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 #include <asio.hpp>
 
-#include "networking/tcp/TCPConnection.h"
-#include "networking/tcp/TCPListener.h"
-#include "networking/NetworkUtils.h"
+#include "networking/tcp/tcp_connection.h"
+#include "networking/tcp/tcp_listener.h"
+#include "networking/utils.h"
 
-#include "TestUtils.h"
+#include "utils.h"
 
 
 // Simple payload used in tests

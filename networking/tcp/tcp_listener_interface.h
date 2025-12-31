@@ -1,7 +1,7 @@
 #pragma once
 
-#include "TCPMessage.h"
-#include "TCPConnectionInterface.h"
+#include "tcp_message.h"
+#include "tcp_connection_interface.h"
 
 class TCPListenerInterface
 {

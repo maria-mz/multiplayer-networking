@@ -10,11 +10,11 @@ if (BUILD_TESTS)
   FetchContent_MakeAvailable(googletest)
 
   add_executable(tests
-    NetworkServerTest.cpp
-    NetworkClientTest.cpp
-    UDPTransportTest.cpp
-    TCPConnectionTest.cpp
-    TSQueueTest.cpp
+    network_server_test.cpp
+    network_client_test.cpp
+    udp_transport_test.cpp
+    tcp_connection_test.cpp
+    thread_safe_queue_test.cpp
   )
 
   target_link_libraries(tests PRIVATE game_core GTest::gtest_main)

@@ -1,6 +1,6 @@
 # Core game logic (shared by client and server)
 add_library(game_core
-  ${CMAKE_SOURCE_DIR}/game/Player.cpp
+  ${CMAKE_SOURCE_DIR}/game/player.cpp
 )
 target_include_directories(game_core PUBLIC
   ${CMAKE_SOURCE_DIR}

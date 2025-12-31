@@ -4,10 +4,10 @@
 #include <format>
 #include <cassert>
 
-#include "common/Logging.h"
+#include "common/logging.h"
 
-#include "Player.h"
-#include "Message.h"
+#include "player.h"
+#include "message.h"
 
 using PlayerID = uint;
 

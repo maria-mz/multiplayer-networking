@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include <asio.hpp>
 
-#include "networking/udp/UDPTransport.h"
-#include "networking/NetworkUtils.h"
+#include "networking/udp/udp_transport.h"
+#include "networking/utils.h"
 
-#include "TestUtils.h"
+#include "utils.h"
 
 
 // Simple payload used in tests

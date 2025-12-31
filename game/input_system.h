@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SDL2/SDL.h"
-#include "Event.h"
+#include "event.h"
 
 #include <vector>
 

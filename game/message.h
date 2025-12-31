@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Player.h"
+#include "player.h"
 
-#include "networking/tcp/TCPMessage.h"
-#include "networking/udp/UDPMessage.h"
+#include "networking/tcp/tcp_message.h"
+#include "networking/udp/udp_message.h"
 
 enum class MessageType : uint8_t
 {
