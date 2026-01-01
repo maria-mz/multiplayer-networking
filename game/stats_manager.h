@@ -9,39 +9,39 @@ class StatsManager
     public:
         StatsManager()
         {
-            m_updatesPerFrameSamples.reserve(m_updatesPerFrameMaxSamples);
+            m_burstinessSamples.reserve(m_burstinessMaxSamples);
         }
 
-        void pushUpdatesPerFrameSample(int updatesThisFrame)
+        void pushBurstinessSample(int updatesThisFrame)
         {
-            if (m_updatesPerFrameSamples.size() == m_updatesPerFrameMaxSamples)
+            if (m_burstinessSamples.size() == m_burstinessMaxSamples)
             {
-                m_updatesPerFrameSamples.erase(m_updatesPerFrameSamples.begin());
+                m_burstinessSamples.erase(m_burstinessSamples.begin());
             }
-            m_updatesPerFrameSamples.push_back(updatesThisFrame);
+            m_burstinessSamples.push_back(updatesThisFrame);
         }
 
-        double computeUpdatesPerFrameCV()
+        double computeBurstinessCV()
         {
-            if (m_updatesPerFrameSamples.empty())
+            if (m_burstinessSamples.empty())
             {
                 return 0.0;
             }
 
             double mean = 0.0;
-            for (const auto& updates : m_updatesPerFrameSamples)
+            for (const auto& updates : m_burstinessSamples)
             {
                 mean += updates;
             }
-            mean /= m_updatesPerFrameSamples.size();
+            mean /= m_burstinessSamples.size();
 
             double variance = 0.0;
-            for (const auto& updates : m_updatesPerFrameSamples)
+            for (const auto& updates : m_burstinessSamples)
             {
                 double diff = updates - mean;
                 variance += diff * diff;
             }
-            variance /= m_updatesPerFrameSamples.size();
+            variance /= m_burstinessSamples.size();
 
             double stddev = std::sqrt(variance);
             double cv = (mean != 0.0) ? stddev / mean : 0.0;
@@ -50,6 +50,6 @@ class StatsManager
         }
 
     private:
-        static constexpr size_t m_updatesPerFrameMaxSamples = 60;
-        std::vector<int> m_updatesPerFrameSamples;
+        static constexpr size_t m_burstinessMaxSamples = 60;
+        std::vector<int> m_burstinessSamples;
 };

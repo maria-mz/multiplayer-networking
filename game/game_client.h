@@ -108,11 +108,11 @@ class GameClient
                 auto outgoingMessages = m_gameSimulation.collectOutgoingMessages();
                 pumpSend(outgoingMessages);
 
-                m_statsManager.pushUpdatesPerFrameSample(remotePlayerUpdatesThisFrame);
+                m_statsManager.pushBurstinessSample(remotePlayerUpdatesThisFrame);
 
                 m_renderSystem.renderGame(m_gameSimulation,
                                           m_networkClient->getPingMs(),
-                                          m_statsManager.computeUpdatesPerFrameCV(),
+                                          m_statsManager.computeBurstinessCV(),
                                           m_config.transportForPlayerStateUpdates);
 
                 frameTimer.endFrame();

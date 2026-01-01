@@ -53,13 +53,13 @@ class RenderSystem
             if (success)
             {
                 m_playerLabelAttributes.font = m_fontManager.getFont(
-                    constants::FILE_FONT_MAIN.c_str(), 14
+                    constants::FILE_FONT_MAIN.c_str(), 16
                 );
                 m_playerLabelAttributes.color = {0, 0, 0, 255};
                 m_playerLabelAttributes.outlinePx = 0;
 
                 m_hudTextAttributes.font = m_fontManager.getFont(
-                    constants::FILE_FONT_MAIN.c_str(), 14
+                    constants::FILE_FONT_MAIN.c_str(), 16
                 );
                 m_hudTextAttributes.color = {0, 0, 0, 255};
                 m_hudTextAttributes.outlinePx = 0;
@@ -70,7 +70,7 @@ class RenderSystem
 
         void renderGame(GameSimulation& gameSimulation,
                         std::optional<float> ping,
-                        double updatesPerFrameCV,
+                        double burstiness,
                         constants::TransportType transportType)
         {
             assert(m_renderer != nullptr);
@@ -85,7 +85,7 @@ class RenderSystem
                 renderPlayer(*player, id);
             }
 
-            renderHUD(gameSimulation, ping, updatesPerFrameCV, transportType);
+            renderHUD(gameSimulation, ping, burstiness, transportType);
 
             SDL_RenderPresent(m_renderer);
         }
@@ -159,7 +159,7 @@ class RenderSystem
             if (
                 !m_fontManager.loadFont(constants::FILE_FONT_MAIN.c_str(), 8) ||
                 !m_fontManager.loadFont(constants::FILE_FONT_MAIN.c_str(), 12) ||
-                !m_fontManager.loadFont(constants::FILE_FONT_MAIN.c_str(), 14)
+                !m_fontManager.loadFont(constants::FILE_FONT_MAIN.c_str(), 16)
             )
             {
                 success = false;
@@ -238,7 +238,7 @@ class RenderSystem
 
         void renderHUD(GameSimulation& gameSimulation,
                        std::optional<float> ping,
-                       double updatesPerFrameCV,
+                       double burstiness,
                        constants::TransportType transportType)
         {
             assert(m_renderer != nullptr);
@@ -255,7 +255,7 @@ class RenderSystem
             lines.push_back("");
             lines.push_back(std::format("Ping: {} ms", pingText));
             lines.push_back("");
-            lines.push_back(std::format("Updates per frame (CV): {:.2f}", updatesPerFrameCV));
+            lines.push_back(std::format("Burstiness (CV): {:.2f}", burstiness));
             lines.push_back("");
 
             for (auto& [id, player] : gameSimulation.getPlayers())
