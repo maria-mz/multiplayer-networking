@@ -1,5 +1,3 @@
-*.sh
-main
 .DS_Store
 .vscode
 *.dSYM
