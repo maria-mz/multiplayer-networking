@@ -3,6 +3,7 @@
 #include <map>
 #include <format>
 #include <cassert>
+#include <optional>
 #include <vector>
 
 #include "common/logging.h"
@@ -104,6 +105,9 @@ class GameSimulation
                 case MessageType::ProjectileSpawn:
                     handleProjectileSpawnMessage(message.data.projectileSpawn);
                     break;
+                case MessageType::PlayerHealthUpdate:
+                    handlePlayerHealthUpdateMessage(message.data.playerHealthUpdate);
+                    break;
                 default:
                     break;
             }
@@ -191,12 +195,46 @@ class GameSimulation
             return hits;
         }
 
-        void removeProjectiles(const std::vector<ProjectileID>& projectileIDs)
+        void removeProjectilesCollidingWithPlayers()
         {
-            for (ProjectileID projectileID : projectileIDs)
+            auto hits = detectProjectileHits();
+
+            for (const auto& hit : hits)
+            {
+                m_projectiles.erase(hit.projectileID);
+            }
+        }
+
+        std::vector<PlayerHealthUpdate> resolveProjectileHits(int projectileDamage)
+        {
+            std::vector<PlayerHealthUpdate> healthUpdates;
+            std::vector<ProjectileID> hitProjectileIDs;
+
+            auto hits = detectProjectileHits();
+            healthUpdates.reserve(hits.size());
+            hitProjectileIDs.reserve(hits.size());
+
+            for (const auto& hit : hits)
+            {
+                auto newHealth = damagePlayer(hit.hitPlayerID, projectileDamage);
+                if (!newHealth)
+                {
+                    continue;
+                }
+
+                healthUpdates.push_back(PlayerHealthUpdate{
+                    .playerID = hit.hitPlayerID,
+                    .health = *newHealth
+                });
+                hitProjectileIDs.push_back(hit.projectileID);
+            }
+
+            for (ProjectileID projectileID : hitProjectileIDs)
             {
                 m_projectiles.erase(projectileID);
             }
+
+            return healthUpdates;
         }
 
         bool isLocalPlayer(PlayerID playerID)
@@ -210,6 +248,19 @@ class GameSimulation
         }
 
     private:
+        std::optional<int> damagePlayer(PlayerID playerID, int damage)
+        {
+            if (!isPlayerInGame(playerID))
+            {
+                LOG_WARNING("Attempted to damage missing player %u", playerID);
+                return std::nullopt;
+            }
+
+            std::unique_ptr<Player>& player = m_players.at(playerID);
+            player->applyDamage(damage);
+            return player->getHealth();
+        }
+
         void updateRemotePlayerState(PlayerID playerID, const PlayerStateUpdate& stateUpdate)
         {
             assert(!isLocalPlayer(playerID) && isPlayerInGame(playerID));
@@ -279,6 +330,18 @@ class GameSimulation
                 Vector2D<float>{projectileSpawn.posX, projectileSpawn.posY},
                 Vector2D<float>{projectileSpawn.velX, projectileSpawn.velY}
             );
+        }
+
+        void handlePlayerHealthUpdateMessage(PlayerHealthUpdate playerHealthUpdate)
+        {
+            if (!isPlayerInGame(playerHealthUpdate.playerID))
+            {
+                LOG_WARNING("Received health update for missing player %u",
+                            playerHealthUpdate.playerID);
+                return;
+            }
+
+            m_players.at(playerHealthUpdate.playerID)->setHealth(playerHealthUpdate.health);
         }
 
         void spawnLocalProjectile(const Player& player)

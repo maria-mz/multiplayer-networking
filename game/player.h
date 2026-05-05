@@ -80,15 +80,19 @@ class Player
     public:
         static constexpr int WIDTH_PX = 32;
         static constexpr float SPEED = 0.35; // Pixels per ms
+        static constexpr int MAX_HEALTH = 100;
 
         Player();
         ~Player();
 
         PlayerState getState() const;
+        int getHealth() const;
         SDL_Rect getBoundingBox() const;
 
         void input(GameEvent inputEvent);
         void update(int deltaTime);
+        void setHealth(int health);
+        void applyDamage(int damage);
         void maybeChangeState(PlayerState state);
         void boundPosition();
 
@@ -104,4 +108,5 @@ class Player
     private:
         PlayerState m_currentState;
         std::unique_ptr<PlayerStateInterface> m_stateObject;
+        int m_health = MAX_HEALTH;
 };

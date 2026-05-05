@@ -104,6 +104,7 @@ class GameClient
                 }
 
                 m_gameSimulation.updateSimulation(frameTimer.getDeltaTime());
+                m_gameSimulation.removeProjectilesCollidingWithPlayers();
 
                 auto outgoingMessages = m_gameSimulation.collectOutgoingMessages();
                 pumpSend(outgoingMessages);

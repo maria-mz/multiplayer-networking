@@ -137,6 +137,11 @@ PlayerState Player::getState() const
     return m_currentState;
 }
 
+int Player::getHealth() const
+{
+    return m_health;
+}
+
 SDL_Rect Player::getBoundingBox() const
 {
     SDL_Rect rect{static_cast<int>(m_position.x),
@@ -158,6 +163,27 @@ void Player::update(int deltaTime)
 {
     m_stateObject->update(*this, deltaTime);
     boundPosition();
+}
+
+void Player::setHealth(int health)
+{
+    if (health < 0)
+    {
+        m_health = 0;
+    }
+    else if (health > MAX_HEALTH)
+    {
+        m_health = MAX_HEALTH;
+    }
+    else
+    {
+        m_health = health;
+    }
+}
+
+void Player::applyDamage(int damage)
+{
+    setHealth(m_health - damage);
 }
 
 void Player::maybeChangeState(PlayerState state)

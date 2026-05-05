@@ -280,8 +280,9 @@ class RenderSystem
             for (auto& [id, player] : gameSimulation.getPlayers())
             {
                 lines.push_back(std::format(
-                    "ID {} ({:.1f}, {:.1f})",
+                    "ID {} HP {} ({:.1f}, {:.1f})",
                     id,
+                    player->getHealth(),
                     player->m_position.x,
                     player->m_position.y
                 ));

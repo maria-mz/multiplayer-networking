@@ -14,6 +14,8 @@
 class GameServer
 {
     public:
+        static constexpr int PROJECTILE_DAMAGE = 25;
+
         struct Config
         {
             constants::TransportType transportForPlayerStateUpdates = constants::TransportType::TCP;
@@ -62,7 +64,7 @@ class GameServer
             }
 
             m_gameSimulation.updateSimulation(deltaTimeMs);
-            handleProjectileHits(m_gameSimulation.detectProjectileHits());
+            broadcastHealthUpdates(m_gameSimulation.resolveProjectileHits(PROJECTILE_DAMAGE));
 
             m_networkServer->pumpSend();
             m_networkServer->cleanupDisconnectedClients();
@@ -130,21 +132,22 @@ class GameServer
 
         uint getNextPlayerID() { return m_nextPlayerID++; }
 
-        void handleProjectileHits(const std::vector<ProjectileHit>& hits)
+        void broadcastHealthUpdates(const std::vector<PlayerHealthUpdate>& healthUpdates)
         {
-            std::vector<ProjectileID> hitProjectileIDs;
-            hitProjectileIDs.reserve(hits.size());
-
-            for (const auto& hit : hits)
+            for (const auto& healthUpdate : healthUpdates)
             {
-                LOG_INFO("Projectile %u from player %u hit player %u",
-                         hit.projectileID,
-                         hit.ownerPlayerID,
-                         hit.hitPlayerID);
-                hitProjectileIDs.push_back(hit.projectileID);
-            }
+                LOG_INFO("Player %u health updated to %d",
+                         healthUpdate.playerID,
+                         healthUpdate.health);
 
-            m_gameSimulation.removeProjectiles(hitProjectileIDs);
+                Message healthUpdateMsg{
+                    .type = MessageType::PlayerHealthUpdate,
+                    .data = { .playerHealthUpdate = healthUpdate }
+                };
+                m_networkServer->queueBroadcast(
+                    healthUpdateMsg, constants::TransportType::TCP, {}
+                );
+            }
         }
 
     private:
