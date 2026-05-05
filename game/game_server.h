@@ -14,8 +14,6 @@
 class GameServer
 {
     public:
-        static constexpr int PROJECTILE_DAMAGE = 25;
-
         struct Config
         {
             constants::TransportType transportForPlayerStateUpdates = constants::TransportType::TCP;
@@ -25,6 +23,7 @@ class GameServer
         GameServer(Config config, std::shared_ptr<NetworkServer> networkServer)
         : m_config(config)
         , m_networkServer(networkServer)
+        , m_gameSimulation(GameSimulation::Config{.projectileDamage = 25, .registerProjectileHits = true})
         {
             m_networkServer->setOnClientConnect([this](ClientID clientID) {
                 onClientConnected(clientID);
@@ -64,9 +63,14 @@ class GameServer
             }
 
             m_gameSimulation.updateSimulation(deltaTimeMs);
-            broadcastProjectileHitResolution(
-                m_gameSimulation.resolveProjectileHits(PROJECTILE_DAMAGE)
-            );
+
+            auto outgoingMessages = m_gameSimulation.collectOutgoingMessages();
+            for (const auto& outMsg : outgoingMessages)
+            {
+                m_networkServer->queueBroadcast(
+                    outMsg, constants::TransportType::TCP, std::nullopt
+                );
+            }
 
             m_networkServer->pumpSend();
             m_networkServer->cleanupDisconnectedClients();
@@ -133,50 +137,6 @@ class GameServer
         };
 
         uint getNextPlayerID() { return m_nextPlayerID++; }
-
-        void broadcastProjectileHitResolution(const ProjectileHitResolution& resolution)
-        {
-            broadcastHealthUpdates(resolution.healthUpdates);
-            broadcastRespawns(resolution.respawns);
-        }
-
-        void broadcastHealthUpdates(const std::vector<PlayerHealthUpdate>& healthUpdates)
-        {
-            for (const auto& healthUpdate : healthUpdates)
-            {
-                LOG_INFO("Player %u health updated to %d",
-                         healthUpdate.playerID,
-                         healthUpdate.health);
-
-                Message healthUpdateMsg{
-                    .type = MessageType::PlayerHealthUpdate,
-                    .data = { .playerHealthUpdate = healthUpdate }
-                };
-                m_networkServer->queueBroadcast(
-                    healthUpdateMsg, constants::TransportType::TCP, {}
-                );
-            }
-        }
-
-        void broadcastRespawns(const std::vector<PlayerRespawned>& respawns)
-        {
-            for (const auto& respawn : respawns)
-            {
-                LOG_INFO("Player %u respawned at (%f, %f) with health %d",
-                         respawn.playerID,
-                         respawn.posX,
-                         respawn.posY,
-                         respawn.health);
-
-                Message respawnMsg{
-                    .type = MessageType::PlayerRespawned,
-                    .data = { .playerRespawned = respawn }
-                };
-                m_networkServer->queueBroadcast(
-                    respawnMsg, constants::TransportType::TCP, {}
-                );
-            }
-        }
 
     private:
         std::shared_ptr<NetworkServer> m_networkServer;

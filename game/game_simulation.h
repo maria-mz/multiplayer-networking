@@ -9,88 +9,43 @@
 #include "common/logging.h"
 #include "common/constants.h"
 
+#include "game_state.h"
 #include "player.h"
 #include "projectile.h"
 #include "message.h"
-
-struct ProjectileHitResolution
-{
-    std::vector<PlayerHealthUpdate> healthUpdates;
-    std::vector<PlayerRespawned> respawns;
-};
 
 
 class GameSimulation
 {
     public:
+        struct Config
+        {
+            uint projectileDamage = 25;
+            bool registerProjectileHits = false;
+        };
+
+    public:
+        GameSimulation(Config config) : m_config(config) {}
+
         void addPlayer(PlayerID playerID)
         {
-            if (isPlayerInGame(playerID))
-            {
-                LOG_WARNING("Attempted to add player %u, but they are already in the game",
-                            playerID);
-                return;
-            }
-
-            m_players[playerID] = std::make_unique<Player>();
-            LOG_INFO("Added player %u to the game", playerID);
-        }
-
-        void addLocalPlayer(PlayerID localPlayerID)
-        {
-            addPlayer(localPlayerID);
-            setLocalPlayerID(localPlayerID);
-            m_players[localPlayerID]->isLocal = true;
+            m_gameState.addPlayer(playerID);
         }
 
         void removePlayer(PlayerID playerID)
         {
-            if (!isPlayerInGame(playerID))
-            {
-                LOG_WARNING("Attempted to remove player %u, but they are already not in the game",
-                            playerID);
-                return;
-            }
-
-            m_players.erase(playerID);
-            LOG_INFO("Removed player %u from the game", playerID);
-
-            if (playerID == m_localPlayerID)
-            {
-                m_localPlayerID = std::nullopt;
-            }
+            m_gameState.removePlayer(playerID);
         }
 
-        std::optional<PlayerID> getLocalPlayerID()
+        void applyPlayerInput(PlayerID playerID, GameEvent event)
         {
-            return m_localPlayerID;
-        }
-
-        void setLocalPlayerID(std::optional<PlayerID> localPlayerID)
-        {
-            if (localPlayerID && !isPlayerInGame(*localPlayerID))
-            {
-                throw std::invalid_argument(
-                    std::format("Cannot set local player ID to {}: player must be in the game",
-                                *localPlayerID
-                    )
-                );
-            }
-            m_localPlayerID = localPlayerID;
-        }
-
-        void applyLocalInput(GameEvent event)
-        {
-            std::unique_ptr<Player>& player = getLocalPlayer();
-
             if (event == GameEvent::Shoot_Pressed)
             {
-                spawnLocalProjectile(*player);
-                return;
+                handleShootInput(playerID);
             }
-
-            if (event != GameEvent::None)
+            else if (event != GameEvent::None)
             {
+                auto& player = m_gameState.getPlayer(playerID);
                 player->input(event);
             }
         }
@@ -122,169 +77,160 @@ class GameSimulation
             }
         }
 
-        std::vector<Message> collectOutgoingMessages()
-        {
-            if (!m_localPlayerID)
-            {
-                return {};
-            }
-
-            std::unique_ptr<Player>& localPlayer = getLocalPlayer();
-
-            Message localStateUpdateMsg;
-            localStateUpdateMsg.type = MessageType::PlayerStateUpdate;
-            localStateUpdateMsg.data.playerStateUpdate = {
-                .posX = localPlayer->m_position.x,
-                .posY = localPlayer->m_position.y,
-                .velX = localPlayer->m_velocity.x,
-                .velY = localPlayer->m_velocity.y,
-                .state = localPlayer->getState(),
-                .playerID = *m_localPlayerID
-            };
-
-            std::vector<Message> outMessages{localStateUpdateMsg};
-            outMessages.insert(outMessages.end(),
-                               m_pendingProjectileSpawnMessages.begin(),
-                               m_pendingProjectileSpawnMessages.end());
-            m_pendingProjectileSpawnMessages.clear();
-
-            return outMessages;
-        }
-
         void updateSimulation(int deltaTime)
         {
-            if (m_localPlayerID)
-            {
-                std::unique_ptr<Player>& localPlayer = getLocalPlayer();
-                localPlayer->update(deltaTime);
-            }
-
             updateProjectiles(deltaTime);
+            updatePlayers(deltaTime);
+            handleProjectileHits();
+        }
+
+        void updateSimulation(int deltaTime, PlayerID playerToUpdate) {
+            updateProjectiles(deltaTime);
+            updatePlayer(deltaTime, playerToUpdate);
+            handleProjectileHits();
+        }
+
+        std::vector<Message> collectOutgoingMessages()
+        {
+            std::vector<Message> messages;
+            messages.swap(m_outgoingMessages);
+            return messages;
         }
 
         const std::map<PlayerID, std::unique_ptr<Player>>& getPlayers()
         {
-            return m_players;
+            return m_gameState.getPlayers();
         }
 
         const std::map<ProjectileID, Projectile>& getProjectiles()
         {
-            return m_projectiles;
+            return m_gameState.getProjectiles();
         }
 
-        std::vector<ProjectileHit> detectProjectileHits()
+        bool isPlayerInGame(PlayerID playerID)
         {
-            std::vector<ProjectileHit> hits;
+            return m_gameState.isPlayerInGame(playerID);
+        }
 
-            for (const auto& [projectileID, projectile] : m_projectiles)
+        PlayerStateUpdate makePlayerStateUpdate(PlayerID playerID)
+        {
+            auto& player = m_gameState.getPlayer(playerID);
+
+            return PlayerStateUpdate{
+                .posX = player->m_position.x,
+                .posY = player->m_position.y,
+                .velX = player->m_velocity.x,
+                .velY = player->m_velocity.y,
+                .state = player->getState(),
+                .playerID = playerID
+            };
+        }
+
+    private:
+        void updatePlayers(int deltaTime)
+        {
+            for (const auto& [id, player] : m_gameState.getPlayers())
             {
-                SDL_Rect projectileBox = projectile.getBoundingBox();
+                player->update(deltaTime);
+            }
+        }
 
-                for (const auto& [playerID, player] : m_players)
-                {
-                    if (playerID == projectile.ownerPlayerID)
-                    {
-                        continue;
-                    }
+        void updatePlayer(int deltaTime, PlayerID playerID)
+        {
+            auto& player = m_gameState.getPlayer(playerID);
+            player->update(deltaTime);
+        }
 
-                    SDL_Rect playerBox = player->getBoundingBox();
+        void handleShootInput(PlayerID playerID)
+        {
+            Projectile spawnedProjectile = createProjectile(playerID);
 
-                    if (hasIntersection(projectileBox, playerBox))
-                    {
-                        hits.push_back(ProjectileHit{
-                            .projectileID = projectileID,
-                            .ownerPlayerID = projectile.ownerPlayerID,
-                            .hitPlayerID = playerID
-                        });
-                        break;
+            m_gameState.addProjectile(spawnedProjectile);
+
+            Message projectileSpawnMessage = Message{
+                .type = MessageType::ProjectileSpawn,
+                .data = {
+                    .projectileSpawn = {
+                        .projectileID = spawnedProjectile.id,
+                        .ownerPlayerID = spawnedProjectile.ownerPlayerID,
+                        .posX = spawnedProjectile.position.x,
+                        .posY = spawnedProjectile.position.y,
+                        .velX = spawnedProjectile.velocity.x,
+                        .velY = spawnedProjectile.velocity.y
                     }
                 }
-            }
-
-            return hits;
+            };
+            m_outgoingMessages.push_back(projectileSpawnMessage);
         }
 
-        void removeProjectilesCollidingWithPlayers()
+        Projectile createProjectile(PlayerID ownerPlayerID)
         {
-            auto hits = detectProjectileHits();
+            auto& player = m_gameState.getPlayer(ownerPlayerID);
 
-            for (const auto& hit : hits)
-            {
-                m_projectiles.erase(hit.projectileID);
-            }
+            ProjectileID projectileID = generateProjectileID(ownerPlayerID);
+
+            Vector2D<float> velocity = player->m_facingDirection * Projectile::SPEED;
+            Vector2D<float> spawn{
+                player->m_position.x + (Player::WIDTH_PX / 2.0f) - (Projectile::SIZE_PX / 2.0f),
+                player->m_position.y + (Player::WIDTH_PX / 2.0f) - (Projectile::SIZE_PX / 2.0f)
+            };
+
+            return Projectile(projectileID, ownerPlayerID, spawn, velocity);
         }
 
-        ProjectileHitResolution resolveProjectileHits(int projectileDamage)
+        ProjectileID generateProjectileID(PlayerID ownerPlayerID) {
+            return (ownerPlayerID * 100000) + m_nextProjectileID++;
+        }
+
+        void handleProjectileHits()
         {
-            ProjectileHitResolution resolution;
+            auto hits = m_gameState.detectProjectileHits();
             std::vector<ProjectileID> hitProjectileIDs;
 
-            auto hits = detectProjectileHits();
-            resolution.healthUpdates.reserve(hits.size());
-            resolution.respawns.reserve(hits.size());
-            hitProjectileIDs.reserve(hits.size());
-
             for (const auto& hit : hits)
             {
-                auto newHealth = damagePlayer(hit.hitPlayerID, projectileDamage);
-                if (!newHealth)
+                if (m_config.registerProjectileHits)
                 {
-                    continue;
+                    registerPlayerHit(hit);
                 }
-
-                if (*newHealth <= 0)
-                {
-                    resolution.respawns.push_back(respawnPlayer(hit.hitPlayerID));
-                }
-                else
-                {
-                    resolution.healthUpdates.push_back(PlayerHealthUpdate{
-                        .playerID = hit.hitPlayerID,
-                        .health = *newHealth
-                    });
-                }
-
                 hitProjectileIDs.push_back(hit.projectileID);
             }
 
             for (ProjectileID projectileID : hitProjectileIDs)
             {
-                m_projectiles.erase(projectileID);
+                m_gameState.removeProjectile(projectileID);
             }
-
-            return resolution;
         }
 
-        bool isLocalPlayer(PlayerID playerID)
-        {
-            return m_localPlayerID && playerID == *m_localPlayerID;
-        }
+        void registerPlayerHit(ProjectileHit hit) {
+            auto& player = m_gameState.getPlayer(hit.hitPlayerID);
+            player->applyDamage(m_config.projectileDamage);
 
-        bool isPlayerInGame(PlayerID playerID)
-        {
-            return m_players.contains(playerID);
-        }
-
-    private:
-        std::optional<int> damagePlayer(PlayerID playerID, int damage)
-        {
-            if (!isPlayerInGame(playerID))
+            int newHealth = player->getHealth();
+            if (newHealth <= 0)
             {
-                LOG_WARNING("Attempted to damage missing player %u", playerID);
-                return std::nullopt;
+                PlayerRespawned playerRespawnedMsg = respawnPlayer(hit.hitPlayerID);
+                m_outgoingMessages.push_back(Message{
+                    .type = MessageType::PlayerRespawned,
+                    .data = { .playerRespawned = playerRespawnedMsg }
+                });
             }
-
-            std::unique_ptr<Player>& player = m_players.at(playerID);
-            player->applyDamage(damage);
-            return player->getHealth();
+            else
+            {
+                m_outgoingMessages.push_back(Message{
+                    .type = MessageType::PlayerHealthUpdate,
+                    .data = { .playerHealthUpdate = PlayerHealthUpdate{
+                        .playerID = hit.hitPlayerID,
+                        .health = newHealth
+                    }}
+                });
+            }
         }
 
         PlayerRespawned respawnPlayer(PlayerID playerID)
         {
-            assert(isPlayerInGame(playerID));
-
-            std::unique_ptr<Player>& player = m_players.at(playerID);
-            Vector2D<float> spawnPosition = getSpawnPosition(playerID);
+            auto& player = m_gameState.getPlayer(playerID);
+            Vector2D<float> spawnPosition = getPlayerSpawnPosition();
 
             player->m_position = spawnPosition;
             player->m_velocity = {0.0f, 0.0f};
@@ -298,7 +244,7 @@ class GameSimulation
             };
         }
 
-        Vector2D<float> getSpawnPosition(PlayerID playerID)
+        Vector2D<float> getPlayerSpawnPosition()
         {
             return {
                 (constants::WINDOW_WIDTH / 2.0f) - (Player::WIDTH_PX / 2.0f),
@@ -306,30 +252,20 @@ class GameSimulation
             };
         }
 
-        void updateRemotePlayerState(PlayerID playerID, const PlayerStateUpdate& stateUpdate)
+        void updatePlayerState(PlayerID playerID, const PlayerStateUpdate& stateUpdate)
         {
-            assert(!isLocalPlayer(playerID) && isPlayerInGame(playerID));
+            auto& player = m_gameState.getPlayer(playerID);
 
-            std::unique_ptr<Player>& remotePlayer = m_players.at(playerID);
+            player->maybeChangeState(stateUpdate.state);
+            player->m_position.x = stateUpdate.posX;
+            player->m_position.y = stateUpdate.posY;
+            player->m_velocity.x = stateUpdate.velX;
+            player->m_velocity.y = stateUpdate.velY;
 
-            remotePlayer->maybeChangeState(stateUpdate.state);
-            remotePlayer->m_position.x = stateUpdate.posX;
-            remotePlayer->m_position.y = stateUpdate.posY;
-            remotePlayer->m_velocity.x = stateUpdate.velX;
-            remotePlayer->m_velocity.y = stateUpdate.velY;
-
-            LOG_DEBUG("Updated remote player %u state: pos=(%f, %f), vel=(%f, %f)",
+            LOG_DEBUG("Updated player %u state: pos=(%f, %f), vel=(%f, %f)",
                     playerID,
                     stateUpdate.posX, stateUpdate.posY,
                     stateUpdate.velX, stateUpdate.velY);
-        }
-
-        std::unique_ptr<Player>& getLocalPlayer()
-        {
-            assert(m_localPlayerID);
-            assert(isPlayerInGame(*m_localPlayerID));
-            std::unique_ptr<Player>& localPlayer = m_players.at(*m_localPlayerID);
-            return localPlayer;
         }
 
         void handlePlayerJoinedMessage(PlayerJoined playerJoined)
@@ -344,17 +280,6 @@ class GameSimulation
 
         void handlePlayerStateUpdateMessage(PlayerStateUpdate playerStateUpdate)
         {
-            if (isLocalPlayer(playerStateUpdate.playerID))
-            {
-                // The local player shouldn't be receiving state updates if programmed correctly,
-                // as its state is determined locally.
-                LOG_WARNING(
-                    "Received state update for local player %u. Ignoring.",
-                    playerStateUpdate.playerID
-                );
-                return;
-            }
-
             if (!isPlayerInGame(playerStateUpdate.playerID))
             {
                 // Assuming no malicious actors, we just missed the player join message,
@@ -362,18 +287,16 @@ class GameSimulation
                 addPlayer(playerStateUpdate.playerID);
             }
 
-            updateRemotePlayerState(playerStateUpdate.playerID,
-                                    playerStateUpdate);
+            updatePlayerState(playerStateUpdate.playerID, playerStateUpdate);
         }
 
         void handleProjectileSpawnMessage(ProjectileSpawn projectileSpawn)
         {
-            m_projectiles.try_emplace(
-                projectileSpawn.projectileID,
-                projectileSpawn.projectileID,
-                projectileSpawn.ownerPlayerID,
-                Vector2D<float>{projectileSpawn.posX, projectileSpawn.posY},
-                Vector2D<float>{projectileSpawn.velX, projectileSpawn.velY}
+            m_gameState.addProjectile(
+                Projectile(projectileSpawn.projectileID,
+                           projectileSpawn.ownerPlayerID,
+                           Vector2D<float>{projectileSpawn.posX, projectileSpawn.posY},
+                           Vector2D<float>{projectileSpawn.velX, projectileSpawn.velY})
             );
         }
 
@@ -385,8 +308,8 @@ class GameSimulation
                             playerHealthUpdate.playerID);
                 return;
             }
-
-            m_players.at(playerHealthUpdate.playerID)->setHealth(playerHealthUpdate.health);
+            auto& player = m_gameState.getPlayer(playerHealthUpdate.playerID);
+            player->setHealth(playerHealthUpdate.health);
         }
 
         void handlePlayerRespawnedMessage(PlayerRespawned playerRespawned)
@@ -398,57 +321,22 @@ class GameSimulation
                 return;
             }
 
-            std::unique_ptr<Player>& player = m_players.at(playerRespawned.playerID);
+            auto& player = m_gameState.getPlayer(playerRespawned.playerID);
             player->m_position = {playerRespawned.posX, playerRespawned.posY};
             player->m_velocity = {0.0f, 0.0f};
             player->setHealth(playerRespawned.health);
-        }
-
-        void spawnLocalProjectile(const Player& player)
-        {
-            assert(m_localPlayerID);
-
-            ProjectileID projectileID = (*m_localPlayerID * 100000) + m_nextLocalProjectileID++;
-            Vector2D<float> velocity = player.m_facingDirection * Projectile::SPEED;
-
-            float spawnX = player.m_position.x + (Player::WIDTH_PX / 2.0f)
-                           - (Projectile::SIZE_PX / 2.0f);
-            float spawnY = player.m_position.y + (Player::WIDTH_PX / 2.0f)
-                           - (Projectile::SIZE_PX / 2.0f);
-
-            ProjectileSpawn projectileSpawn{
-                .projectileID = projectileID,
-                .ownerPlayerID = *m_localPlayerID,
-                .posX = spawnX,
-                .posY = spawnY,
-                .velX = velocity.x,
-                .velY = velocity.y
-            };
-
-            handleProjectileSpawnMessage(projectileSpawn);
-
-            Message projectileSpawnMessage{
-                .type = MessageType::ProjectileSpawn,
-                .data = { .projectileSpawn = projectileSpawn }
-            };
-            m_pendingProjectileSpawnMessages.push_back(projectileSpawnMessage);
         }
 
         void updateProjectiles(int deltaTime)
         {
             std::vector<ProjectileID> projectilesToRemove;
 
-            for (auto& [projectileID, projectile] : m_projectiles)
+            for (auto& [projectileID, _] : m_gameState.getProjectiles())
             {
+                Projectile& projectile = m_gameState.getProjectile(projectileID);
                 projectile.update(deltaTime);
 
-                const SDL_Rect box = projectile.getBoundingBox();
-                bool outOfBounds = box.x + box.w < 0
-                    || box.x > constants::WINDOW_WIDTH
-                    || box.y + box.h < 0
-                    || box.y > constants::WINDOW_HEIGHT;
-
-                if (outOfBounds || projectile.ageMs >= Projectile::LIFETIME_MS)
+                if (isOutOfBounds(projectile) || projectile.isExpired())
                 {
                     projectilesToRemove.push_back(projectileID);
                 }
@@ -456,23 +344,24 @@ class GameSimulation
 
             for (ProjectileID projectileID : projectilesToRemove)
             {
-                m_projectiles.erase(projectileID);
+                m_gameState.removeProjectile(projectileID);
             }
         }
 
-        bool hasIntersection(const SDL_Rect& a, const SDL_Rect& b)
+        bool isOutOfBounds(const Projectile& projectile)
         {
-            return a.x < b.x + b.w
-                && a.x + a.w > b.x
-                && a.y < b.y + b.h
-                && a.y + a.h > b.y;
+            const SDL_Rect box = projectile.getBoundingBox();
+            return box.x + box.w < 0
+                || box.x > constants::WINDOW_WIDTH
+                || box.y + box.h < 0
+                || box.y > constants::WINDOW_HEIGHT;
         }
 
     private:
-        std::optional<PlayerID> m_localPlayerID;
-        std::map<PlayerID, std::unique_ptr<Player>> m_players;
+        GameState m_gameState;
+        uint m_nextProjectileID = 0;
 
-        std::map<ProjectileID, Projectile> m_projectiles;
-        std::vector<Message> m_pendingProjectileSpawnMessages;
-        uint m_nextLocalProjectileID = 0;
+        std::vector<Message> m_outgoingMessages;
+
+        Config m_config;
 };

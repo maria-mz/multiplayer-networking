@@ -27,6 +27,7 @@ class GameClient
                    std::shared_ptr<NetworkClient> networkClient)
         : m_config(config)
         , m_networkClient(networkClient)
+        , m_gameSimulation(GameSimulation::Config{})
         {
             assert(m_networkClient != nullptr);
         }
@@ -52,7 +53,7 @@ class GameClient
                 throw std::runtime_error("Timed out waiting for AssignLocalPlayerID");
             }
 
-            m_gameSimulation.addLocalPlayer(m_localPlayerID);
+            m_gameSimulation.addPlayer(m_localPlayerID);
         }
 
         bool isConnected() const
@@ -90,7 +91,7 @@ class GameClient
                     }
                     else if (auto gameEvent = std::get_if<GameEvent>(&event))
                     {
-                        m_gameSimulation.applyLocalInput(*gameEvent);
+                        m_gameSimulation.applyPlayerInput(m_localPlayerID, *gameEvent);
                     }
                 }
 
@@ -103,10 +104,15 @@ class GameClient
                     m_gameSimulation.applyIncomingMessage(inMessage);
                 }
 
-                m_gameSimulation.updateSimulation(frameTimer.getDeltaTime());
-                m_gameSimulation.removeProjectilesCollidingWithPlayers();
+                m_gameSimulation.updateSimulation(frameTimer.getDeltaTime(), m_localPlayerID);
 
                 auto outgoingMessages = m_gameSimulation.collectOutgoingMessages();
+                outgoingMessages.push_back(
+                    Message{
+                        .type = MessageType::PlayerStateUpdate,
+                        .data = { .playerStateUpdate = m_gameSimulation.makePlayerStateUpdate(m_localPlayerID) }
+                    }
+                );
                 pumpSend(outgoingMessages);
 
                 m_statsManager.pushBurstinessSample(remotePlayerUpdatesThisFrame);

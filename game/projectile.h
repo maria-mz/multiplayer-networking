@@ -23,13 +23,17 @@ class Projectile
         , ownerPlayerID(ownerPlayerID)
         , position(position)
         , velocity(velocity)
-        {
-        }
+        {}
 
         void update(int deltaTime)
         {
             position += velocity * static_cast<float>(deltaTime);
             ageMs += deltaTime;
+        }
+
+        bool isExpired() const
+        {
+            return ageMs >= LIFETIME_MS;
         }
 
         SDL_Rect getBoundingBox() const
