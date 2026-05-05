@@ -48,3 +48,10 @@ class Projectile
         Vector2D<float> velocity;
         int ageMs = 0;
 };
+
+struct ProjectileHit
+{
+    ProjectileID projectileID;
+    PlayerID ownerPlayerID;
+    PlayerID hitPlayerID;
+};

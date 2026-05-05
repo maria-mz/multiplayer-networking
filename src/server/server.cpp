@@ -71,9 +71,19 @@ int main(int argc, char* argv[])
 
         LOG_INFO("Server initialized, starting update loop");
 
+        auto lastUpdateTime = std::chrono::steady_clock::now();
+
         while (running)
         {
-            server->update();
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = now - lastUpdateTime;
+            lastUpdateTime = now;
+
+            int deltaTimeMs = static_cast<int>(
+                std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
+            );
+
+            server->update(deltaTimeMs);
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }

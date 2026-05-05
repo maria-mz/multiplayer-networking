@@ -12,6 +12,7 @@
 #include "projectile.h"
 #include "message.h"
 
+
 class GameSimulation
 {
     public:
@@ -158,6 +159,46 @@ class GameSimulation
             return m_projectiles;
         }
 
+        std::vector<ProjectileHit> detectProjectileHits()
+        {
+            std::vector<ProjectileHit> hits;
+
+            for (const auto& [projectileID, projectile] : m_projectiles)
+            {
+                SDL_Rect projectileBox = projectile.getBoundingBox();
+
+                for (const auto& [playerID, player] : m_players)
+                {
+                    if (playerID == projectile.ownerPlayerID)
+                    {
+                        continue;
+                    }
+
+                    SDL_Rect playerBox = player->getBoundingBox();
+
+                    if (hasIntersection(projectileBox, playerBox))
+                    {
+                        hits.push_back(ProjectileHit{
+                            .projectileID = projectileID,
+                            .ownerPlayerID = projectile.ownerPlayerID,
+                            .hitPlayerID = playerID
+                        });
+                        break;
+                    }
+                }
+            }
+
+            return hits;
+        }
+
+        void removeProjectiles(const std::vector<ProjectileID>& projectileIDs)
+        {
+            for (ProjectileID projectileID : projectileIDs)
+            {
+                m_projectiles.erase(projectileID);
+            }
+        }
+
         bool isLocalPlayer(PlayerID playerID)
         {
             return m_localPlayerID && playerID == *m_localPlayerID;
@@ -294,6 +335,14 @@ class GameSimulation
             {
                 m_projectiles.erase(projectileID);
             }
+        }
+
+        bool hasIntersection(const SDL_Rect& a, const SDL_Rect& b)
+        {
+            return a.x < b.x + b.w
+                && a.x + a.w > b.x
+                && a.y < b.y + b.h
+                && a.y + a.h > b.y;
         }
 
     private:

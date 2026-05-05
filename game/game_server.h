@@ -3,10 +3,12 @@
 #include <unordered_map>
 
 #include "common/constants.h"
+#include "common/logging.h"
 
 #include "networking/tcp/tcp_message.h"
 #include "networking/udp/udp_message.h"
 
+#include "game_simulation.h"
 #include "network_server.h"
 
 class GameServer
@@ -30,7 +32,7 @@ class GameServer
             });
         }
 
-        void update()
+        void update(int deltaTimeMs)
         {
             m_networkServer->acceptConnections();
             m_networkServer->pumpReceive();
@@ -42,15 +44,25 @@ class GameServer
                 auto messages = m_networkServer->consumeIncomingMessages(clientID);
                 for (const auto& message : messages)
                 {
-                    if (message.type == MessageType::PlayerStateUpdate
-                        || message.type == MessageType::ProjectileSpawn)
+                    if (message.type == MessageType::PlayerStateUpdate)
                     {
+                        m_gameSimulation.applyIncomingMessage(message);
                         m_networkServer->queueBroadcast(
                             message, m_config.transportForPlayerStateUpdates, clientID
                         );
                     }
+                    else if (message.type == MessageType::ProjectileSpawn)
+                    {
+                        m_gameSimulation.applyIncomingMessage(message);
+                        m_networkServer->queueBroadcast(
+                            message, constants::TransportType::TCP, clientID
+                        );
+                    }
                 }
             }
+
+            m_gameSimulation.updateSimulation(deltaTimeMs);
+            handleProjectileHits(m_gameSimulation.detectProjectileHits());
 
             m_networkServer->pumpSend();
             m_networkServer->cleanupDisconnectedClients();
@@ -80,6 +92,7 @@ class GameServer
             };
 
             m_clientIDToPlayerID[connectedClientID] = playerID;
+            m_gameSimulation.addPlayer(playerID);
 
             m_networkServer->queueOutgoingMessage(
                 connectedClientID, assignPlayerID, constants::TransportType::TCP
@@ -91,7 +104,15 @@ class GameServer
 
         void onClientDisconnected(ClientID disconnectedClientID)
         {
-            uint playerID = m_clientIDToPlayerID[disconnectedClientID];
+            auto it = m_clientIDToPlayerID.find(disconnectedClientID);
+            if (it == m_clientIDToPlayerID.end())
+            {
+                return;
+            }
+
+            uint playerID = it->second;
+            m_gameSimulation.removePlayer(playerID);
+            m_clientIDToPlayerID.erase(it);
 
             Message playerLeftMsg{
                 MessageType::PlayerLeft,
@@ -109,8 +130,26 @@ class GameServer
 
         uint getNextPlayerID() { return m_nextPlayerID++; }
 
+        void handleProjectileHits(const std::vector<ProjectileHit>& hits)
+        {
+            std::vector<ProjectileID> hitProjectileIDs;
+            hitProjectileIDs.reserve(hits.size());
+
+            for (const auto& hit : hits)
+            {
+                LOG_INFO("Projectile %u from player %u hit player %u",
+                         hit.projectileID,
+                         hit.ownerPlayerID,
+                         hit.hitPlayerID);
+                hitProjectileIDs.push_back(hit.projectileID);
+            }
+
+            m_gameSimulation.removeProjectiles(hitProjectileIDs);
+        }
+
     private:
         std::shared_ptr<NetworkServer> m_networkServer;
+        GameSimulation m_gameSimulation;
         Config m_config;
 
         uint m_nextPlayerID = 0;
