@@ -13,6 +13,12 @@
 #include "projectile.h"
 #include "message.h"
 
+struct ProjectileHitResolution
+{
+    std::vector<PlayerHealthUpdate> healthUpdates;
+    std::vector<PlayerRespawned> respawns;
+};
+
 
 class GameSimulation
 {
@@ -107,6 +113,9 @@ class GameSimulation
                     break;
                 case MessageType::PlayerHealthUpdate:
                     handlePlayerHealthUpdateMessage(message.data.playerHealthUpdate);
+                    break;
+                case MessageType::PlayerRespawned:
+                    handlePlayerRespawnedMessage(message.data.playerRespawned);
                     break;
                 default:
                     break;
@@ -205,13 +214,14 @@ class GameSimulation
             }
         }
 
-        std::vector<PlayerHealthUpdate> resolveProjectileHits(int projectileDamage)
+        ProjectileHitResolution resolveProjectileHits(int projectileDamage)
         {
-            std::vector<PlayerHealthUpdate> healthUpdates;
+            ProjectileHitResolution resolution;
             std::vector<ProjectileID> hitProjectileIDs;
 
             auto hits = detectProjectileHits();
-            healthUpdates.reserve(hits.size());
+            resolution.healthUpdates.reserve(hits.size());
+            resolution.respawns.reserve(hits.size());
             hitProjectileIDs.reserve(hits.size());
 
             for (const auto& hit : hits)
@@ -222,10 +232,18 @@ class GameSimulation
                     continue;
                 }
 
-                healthUpdates.push_back(PlayerHealthUpdate{
-                    .playerID = hit.hitPlayerID,
-                    .health = *newHealth
-                });
+                if (*newHealth <= 0)
+                {
+                    resolution.respawns.push_back(respawnPlayer(hit.hitPlayerID));
+                }
+                else
+                {
+                    resolution.healthUpdates.push_back(PlayerHealthUpdate{
+                        .playerID = hit.hitPlayerID,
+                        .health = *newHealth
+                    });
+                }
+
                 hitProjectileIDs.push_back(hit.projectileID);
             }
 
@@ -234,7 +252,7 @@ class GameSimulation
                 m_projectiles.erase(projectileID);
             }
 
-            return healthUpdates;
+            return resolution;
         }
 
         bool isLocalPlayer(PlayerID playerID)
@@ -259,6 +277,33 @@ class GameSimulation
             std::unique_ptr<Player>& player = m_players.at(playerID);
             player->applyDamage(damage);
             return player->getHealth();
+        }
+
+        PlayerRespawned respawnPlayer(PlayerID playerID)
+        {
+            assert(isPlayerInGame(playerID));
+
+            std::unique_ptr<Player>& player = m_players.at(playerID);
+            Vector2D<float> spawnPosition = getSpawnPosition(playerID);
+
+            player->m_position = spawnPosition;
+            player->m_velocity = {0.0f, 0.0f};
+            player->setHealth(Player::MAX_HEALTH);
+
+            return PlayerRespawned{
+                .playerID = playerID,
+                .posX = spawnPosition.x,
+                .posY = spawnPosition.y,
+                .health = player->getHealth()
+            };
+        }
+
+        Vector2D<float> getSpawnPosition(PlayerID playerID)
+        {
+            return {
+                (constants::WINDOW_WIDTH / 2.0f) - (Player::WIDTH_PX / 2.0f),
+                (constants::WINDOW_HEIGHT / 2.0f) - (Player::WIDTH_PX / 2.0f)
+            };
         }
 
         void updateRemotePlayerState(PlayerID playerID, const PlayerStateUpdate& stateUpdate)
@@ -342,6 +387,21 @@ class GameSimulation
             }
 
             m_players.at(playerHealthUpdate.playerID)->setHealth(playerHealthUpdate.health);
+        }
+
+        void handlePlayerRespawnedMessage(PlayerRespawned playerRespawned)
+        {
+            if (!isPlayerInGame(playerRespawned.playerID))
+            {
+                LOG_WARNING("Received respawn for missing player %u",
+                            playerRespawned.playerID);
+                return;
+            }
+
+            std::unique_ptr<Player>& player = m_players.at(playerRespawned.playerID);
+            player->m_position = {playerRespawned.posX, playerRespawned.posY};
+            player->m_velocity = {0.0f, 0.0f};
+            player->setHealth(playerRespawned.health);
         }
 
         void spawnLocalProjectile(const Player& player)

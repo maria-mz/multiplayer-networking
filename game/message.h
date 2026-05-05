@@ -18,7 +18,8 @@ enum class MessageType : uint8_t
     Ping,
     Pong,
     ProjectileSpawn,
-    PlayerHealthUpdate
+    PlayerHealthUpdate,
+    PlayerRespawned
 };
 
 struct AssignLocalPlayerID
@@ -84,6 +85,14 @@ struct PlayerHealthUpdate
     int health;
 };
 
+struct PlayerRespawned
+{
+    uint playerID;
+    float posX;
+    float posY;
+    int health;
+};
+
 struct Message
 {
     MessageType type;
@@ -99,6 +108,7 @@ struct Message
         Pong pong;
         ProjectileSpawn projectileSpawn;
         PlayerHealthUpdate playerHealthUpdate;
+        PlayerRespawned playerRespawned;
     } data;
 };
 

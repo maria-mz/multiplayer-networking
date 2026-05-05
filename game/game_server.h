@@ -64,7 +64,9 @@ class GameServer
             }
 
             m_gameSimulation.updateSimulation(deltaTimeMs);
-            broadcastHealthUpdates(m_gameSimulation.resolveProjectileHits(PROJECTILE_DAMAGE));
+            broadcastProjectileHitResolution(
+                m_gameSimulation.resolveProjectileHits(PROJECTILE_DAMAGE)
+            );
 
             m_networkServer->pumpSend();
             m_networkServer->cleanupDisconnectedClients();
@@ -132,6 +134,12 @@ class GameServer
 
         uint getNextPlayerID() { return m_nextPlayerID++; }
 
+        void broadcastProjectileHitResolution(const ProjectileHitResolution& resolution)
+        {
+            broadcastHealthUpdates(resolution.healthUpdates);
+            broadcastRespawns(resolution.respawns);
+        }
+
         void broadcastHealthUpdates(const std::vector<PlayerHealthUpdate>& healthUpdates)
         {
             for (const auto& healthUpdate : healthUpdates)
@@ -146,6 +154,26 @@ class GameServer
                 };
                 m_networkServer->queueBroadcast(
                     healthUpdateMsg, constants::TransportType::TCP, {}
+                );
+            }
+        }
+
+        void broadcastRespawns(const std::vector<PlayerRespawned>& respawns)
+        {
+            for (const auto& respawn : respawns)
+            {
+                LOG_INFO("Player %u respawned at (%f, %f) with health %d",
+                         respawn.playerID,
+                         respawn.posX,
+                         respawn.posY,
+                         respawn.health);
+
+                Message respawnMsg{
+                    .type = MessageType::PlayerRespawned,
+                    .data = { .playerRespawned = respawn }
+                };
+                m_networkServer->queueBroadcast(
+                    respawnMsg, constants::TransportType::TCP, {}
                 );
             }
         }
