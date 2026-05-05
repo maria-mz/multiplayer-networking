@@ -85,6 +85,11 @@ class RenderSystem
                 renderPlayer(*player, id);
             }
 
+            for (const auto& [id, projectile] : gameSimulation.getProjectiles())
+            {
+                renderProjectile(projectile);
+            }
+
             renderHUD(gameSimulation, ping, burstiness, transportType);
 
             SDL_RenderPresent(m_renderer);
@@ -199,6 +204,20 @@ class RenderSystem
             int idY = drawAbove ? box.y - idLabel.getHeight() :  box.y + box.h;
 
             idLabel.render(idX, idY, m_renderer);
+        }
+
+        void renderProjectile(const Projectile& projectile)
+        {
+            assert(m_renderer != nullptr);
+
+            SDL_Rect box = projectile.getBoundingBox();
+
+            SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(m_renderer, 230, 70, 45, 220);
+            SDL_RenderFillRect(m_renderer, &box);
+            SDL_SetRenderDrawColor(m_renderer, 120, 20, 15, 255);
+            SDL_RenderDrawRect(m_renderer, &box);
+            SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_NONE);
         }
 
         void renderGrid()

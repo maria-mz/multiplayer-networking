@@ -16,7 +16,8 @@ enum class MessageType : uint8_t
     UDPBind,
     UDPBindAck,
     Ping,
-    Pong
+    Pong,
+    ProjectileSpawn
 };
 
 struct AssignLocalPlayerID
@@ -66,6 +67,16 @@ struct Pong
     uint seq;
 };
 
+struct ProjectileSpawn
+{
+    uint projectileID;
+    uint ownerPlayerID;
+    float posX;
+    float posY;
+    float velX;
+    float velY;
+};
+
 struct Message
 {
     MessageType type;
@@ -79,6 +90,7 @@ struct Message
         UDPBindAck udpBindAck;
         Ping ping;
         Pong pong;
+        ProjectileSpawn projectileSpawn;
     } data;
 };
 

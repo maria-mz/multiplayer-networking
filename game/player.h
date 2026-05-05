@@ -10,6 +10,8 @@
 
 #include "event.h"
 
+using PlayerID = uint;
+
 class InputManager
 {
     public:
@@ -92,6 +94,7 @@ class Player
 
         Vector2D<float> m_position;
         Vector2D<float> m_velocity;
+        Vector2D<float> m_facingDirection;
         Transform m_transform;
 
         InputManager m_inputManager;

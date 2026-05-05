@@ -42,7 +42,8 @@ class GameServer
                 auto messages = m_networkServer->consumeIncomingMessages(clientID);
                 for (const auto& message : messages)
                 {
-                    if (message.type == MessageType::PlayerStateUpdate)
+                    if (message.type == MessageType::PlayerStateUpdate
+                        || message.type == MessageType::ProjectileSpawn)
                     {
                         m_networkServer->queueBroadcast(
                             message, m_config.transportForPlayerStateUpdates, clientID

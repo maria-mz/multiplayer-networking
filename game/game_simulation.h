@@ -3,13 +3,14 @@
 #include <map>
 #include <format>
 #include <cassert>
+#include <vector>
 
 #include "common/logging.h"
+#include "common/constants.h"
 
 #include "player.h"
+#include "projectile.h"
 #include "message.h"
-
-using PlayerID = uint;
 
 class GameSimulation
 {
@@ -74,6 +75,12 @@ class GameSimulation
         {
             std::unique_ptr<Player>& player = getLocalPlayer();
 
+            if (event == GameEvent::Shoot_Pressed)
+            {
+                spawnLocalProjectile(*player);
+                return;
+            }
+
             if (event != GameEvent::None)
             {
                 player->input(event);
@@ -92,6 +99,9 @@ class GameSimulation
                     break;
                 case MessageType::PlayerStateUpdate:
                     handlePlayerStateUpdateMessage(message.data.playerStateUpdate);
+                    break;
+                case MessageType::ProjectileSpawn:
+                    handleProjectileSpawnMessage(message.data.projectileSpawn);
                     break;
                 default:
                     break;
@@ -118,7 +128,13 @@ class GameSimulation
                 .playerID = *m_localPlayerID
             };
 
-            return std::vector<Message>{localStateUpdateMsg};
+            std::vector<Message> outMessages{localStateUpdateMsg};
+            outMessages.insert(outMessages.end(),
+                               m_pendingProjectileSpawnMessages.begin(),
+                               m_pendingProjectileSpawnMessages.end());
+            m_pendingProjectileSpawnMessages.clear();
+
+            return outMessages;
         }
 
         void updateSimulation(int deltaTime)
@@ -128,11 +144,18 @@ class GameSimulation
                 std::unique_ptr<Player>& localPlayer = getLocalPlayer();
                 localPlayer->update(deltaTime);
             }
+
+            updateProjectiles(deltaTime);
         }
 
         const std::map<PlayerID, std::unique_ptr<Player>>& getPlayers()
         {
             return m_players;
+        }
+
+        const std::map<ProjectileID, Projectile>& getProjectiles()
+        {
+            return m_projectiles;
         }
 
         bool isLocalPlayer(PlayerID playerID)
@@ -206,7 +229,78 @@ class GameSimulation
                                     playerStateUpdate);
         }
 
+        void handleProjectileSpawnMessage(ProjectileSpawn projectileSpawn)
+        {
+            m_projectiles.try_emplace(
+                projectileSpawn.projectileID,
+                projectileSpawn.projectileID,
+                projectileSpawn.ownerPlayerID,
+                Vector2D<float>{projectileSpawn.posX, projectileSpawn.posY},
+                Vector2D<float>{projectileSpawn.velX, projectileSpawn.velY}
+            );
+        }
+
+        void spawnLocalProjectile(const Player& player)
+        {
+            assert(m_localPlayerID);
+
+            ProjectileID projectileID = (*m_localPlayerID * 100000) + m_nextLocalProjectileID++;
+            Vector2D<float> velocity = player.m_facingDirection * Projectile::SPEED;
+
+            float spawnX = player.m_position.x + (Player::WIDTH_PX / 2.0f)
+                           - (Projectile::SIZE_PX / 2.0f);
+            float spawnY = player.m_position.y + (Player::WIDTH_PX / 2.0f)
+                           - (Projectile::SIZE_PX / 2.0f);
+
+            ProjectileSpawn projectileSpawn{
+                .projectileID = projectileID,
+                .ownerPlayerID = *m_localPlayerID,
+                .posX = spawnX,
+                .posY = spawnY,
+                .velX = velocity.x,
+                .velY = velocity.y
+            };
+
+            handleProjectileSpawnMessage(projectileSpawn);
+
+            Message projectileSpawnMessage{
+                .type = MessageType::ProjectileSpawn,
+                .data = { .projectileSpawn = projectileSpawn }
+            };
+            m_pendingProjectileSpawnMessages.push_back(projectileSpawnMessage);
+        }
+
+        void updateProjectiles(int deltaTime)
+        {
+            std::vector<ProjectileID> projectilesToRemove;
+
+            for (auto& [projectileID, projectile] : m_projectiles)
+            {
+                projectile.update(deltaTime);
+
+                const SDL_Rect box = projectile.getBoundingBox();
+                bool outOfBounds = box.x + box.w < 0
+                    || box.x > constants::WINDOW_WIDTH
+                    || box.y + box.h < 0
+                    || box.y > constants::WINDOW_HEIGHT;
+
+                if (outOfBounds || projectile.ageMs >= Projectile::LIFETIME_MS)
+                {
+                    projectilesToRemove.push_back(projectileID);
+                }
+            }
+
+            for (ProjectileID projectileID : projectilesToRemove)
+            {
+                m_projectiles.erase(projectileID);
+            }
+        }
+
     private:
-        std::map<PlayerID, std::unique_ptr<Player>> m_players;
         std::optional<PlayerID> m_localPlayerID;
+        std::map<PlayerID, std::unique_ptr<Player>> m_players;
+
+        std::map<ProjectileID, Projectile> m_projectiles;
+        std::vector<Message> m_pendingProjectileSpawnMessages;
+        uint m_nextLocalProjectileID = 0;
 };

@@ -102,6 +102,7 @@ void PlayerStateRun::update(Player &player, int deltaTime)
         float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
         dir.x /= len;
         dir.y /= len;
+        player.m_facingDirection = dir;
     }
 
     player.m_velocity.x = dir.x * player.SPEED;
@@ -120,7 +121,8 @@ Player::Player()
     : m_stateObject(std::make_unique<PlayerStateIdle>()),
       m_transform{WIDTH_PX, WIDTH_PX, 1},
       m_position{(constants::WINDOW_WIDTH / 2) - (WIDTH_PX / 2),
-                 (constants::WINDOW_HEIGHT / 2) - (WIDTH_PX / 2)}
+                 (constants::WINDOW_HEIGHT / 2) - (WIDTH_PX / 2)},
+      m_facingDirection{1.0f, 0.0f}
 {
     m_stateObject->enter(*this);
 }

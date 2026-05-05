@@ -18,7 +18,8 @@ enum class GameEvent {
     MoveUp_Pressed,
     MoveUp_Released,
     MoveDown_Pressed,
-    MoveDown_Released
+    MoveDown_Released,
+    Shoot_Pressed
 };
 
 using Event = std::variant<std::monostate, AppEvent, GameEvent>;
@@ -39,6 +40,7 @@ class SDLEventTranslator
                     case SDLK_a: event = GameEvent::MoveLeft_Pressed; break;
                     case SDLK_w: event = GameEvent::MoveUp_Pressed; break;
                     case SDLK_s: event = GameEvent::MoveDown_Pressed; break;
+                    case SDLK_SPACE: event = GameEvent::Shoot_Pressed; break;
                 }
             }
 
