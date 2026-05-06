@@ -71,6 +71,7 @@ class RenderSystem
         void renderGame(GameSimulation& gameSimulation,
                         std::optional<float> ping,
                         double burstiness,
+                        double remoteMotionJitter,
                         constants::TransportType transportType)
         {
             assert(m_renderer != nullptr);
@@ -90,7 +91,7 @@ class RenderSystem
                 renderProjectile(projectile);
             }
 
-            renderHUD(gameSimulation, ping, burstiness, transportType);
+            renderHUD(gameSimulation, ping, burstiness, remoteMotionJitter, transportType);
 
             SDL_RenderPresent(m_renderer);
         }
@@ -258,6 +259,7 @@ class RenderSystem
         void renderHUD(GameSimulation& gameSimulation,
                        std::optional<float> ping,
                        double burstiness,
+                       double remoteMotionJitter,
                        constants::TransportType transportType)
         {
             assert(m_renderer != nullptr);
@@ -275,6 +277,8 @@ class RenderSystem
             lines.push_back(std::format("Ping: {} ms", pingText));
             lines.push_back("");
             lines.push_back(std::format("Burstiness (CV): {:.2f}", burstiness));
+            lines.push_back("");
+            lines.push_back(std::format("Remote jitter: {:.2f} px/frame", remoteMotionJitter));
             lines.push_back("");
 
             for (auto& [id, player] : gameSimulation.getPlayers())

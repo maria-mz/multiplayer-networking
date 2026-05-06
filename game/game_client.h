@@ -116,10 +116,12 @@ class GameClient
                 pumpSend(outgoingMessages);
 
                 m_statsManager.pushBurstinessSample(remotePlayerUpdatesThisFrame);
+                pushRemoteMotionSamples();
 
                 m_renderSystem.renderGame(m_gameSimulation,
                                           m_networkClient->getPingMs(),
                                           m_statsManager.computeBurstinessCV(),
+                                          m_statsManager.computeRemoteMotionJitter(),
                                           m_config.transportForPlayerStateUpdates);
 
                 frameTimer.endFrame();
@@ -182,6 +184,21 @@ class GameClient
         {
             m_networkClient->pumpReceive();
             return m_networkClient->consumeIncomingMessages();
+        }
+
+        void pushRemoteMotionSamples()
+        {
+            for (const auto& [playerID, player] : m_gameSimulation.getPlayers())
+            {
+                if (playerID == m_localPlayerID)
+                {
+                    continue;
+                }
+
+                m_statsManager.pushRemoteMotionSample(
+                    playerID, player->m_position
+                );
+            }
         }
 
     private:
