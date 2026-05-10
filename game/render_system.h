@@ -58,11 +58,11 @@ class RenderSystem
                 m_playerLabelAttributes.color = {0, 0, 0, 255};
                 m_playerLabelAttributes.outlinePx = 0;
 
-                m_hudTextAttributes.font = m_fontManager.getFont(
+                m_debugUITextAttributes.font = m_fontManager.getFont(
                     constants::FILE_FONT_MAIN.c_str(), 16
                 );
-                m_hudTextAttributes.color = {0, 0, 0, 255};
-                m_hudTextAttributes.outlinePx = 0;
+                m_debugUITextAttributes.color = {0, 0, 0, 255};
+                m_debugUITextAttributes.outlinePx = 0;
             }
 
             return success;
@@ -70,14 +70,18 @@ class RenderSystem
 
         void renderGame(GameSimulation& gameSimulation,
                         std::optional<float> ping,
-                        double remoteUpdateVariability)
+                        double remoteUpdateVariability,
+                        bool showDebugUI)
         {
             assert(m_renderer != nullptr);
 
             SDL_SetRenderDrawColor(m_renderer, 255, 255, 255, 255);
             SDL_RenderClear(m_renderer);
 
-            renderGrid();
+            if (showDebugUI)
+            {
+                renderGrid();
+            }
 
             for (auto& [id, player] : gameSimulation.getPlayers())
             {
@@ -89,7 +93,10 @@ class RenderSystem
                 renderProjectile(projectile);
             }
 
-            renderHUD(gameSimulation, ping, remoteUpdateVariability);
+            if (showDebugUI)
+            {
+                renderDebugUI(gameSimulation, ping, remoteUpdateVariability);
+            }
 
             SDL_RenderPresent(m_renderer);
         }
@@ -254,9 +261,9 @@ class RenderSystem
             SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_NONE);
         }
 
-        void renderHUD(GameSimulation& gameSimulation,
-                       std::optional<float> ping,
-                       double remoteUpdateVariability)
+        void renderDebugUI(GameSimulation& gameSimulation,
+                           std::optional<float> ping,
+                           double remoteUpdateVariability)
         {
             assert(m_renderer != nullptr);
 
@@ -298,7 +305,7 @@ class RenderSystem
                     continue;
                 }
 
-                Text t(m_hudTextAttributes, line, m_renderer);
+                Text t(m_debugUITextAttributes, line, m_renderer);
 
                 SDL_Rect bgRect {
                     startX - textPaddingX,
@@ -330,5 +337,5 @@ class RenderSystem
         FontManager m_fontManager;
 
         TextAttributes m_playerLabelAttributes;
-        TextAttributes m_hudTextAttributes;
+        TextAttributes m_debugUITextAttributes;
 };

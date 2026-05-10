@@ -6,7 +6,8 @@
 enum class AppEvent
 {
     None,
-    Quit
+    Quit,
+    ToggleDebugUI
 };
 
 enum class GameEvent {
@@ -36,6 +37,7 @@ class SDLEventTranslator
             {
                 switch (SDLEvent.key.keysym.sym)
                 {
+                    case SDLK_F3: event = AppEvent::ToggleDebugUI; break;
                     case SDLK_d: event = GameEvent::MoveRight_Pressed; break;
                     case SDLK_a: event = GameEvent::MoveLeft_Pressed; break;
                     case SDLK_w: event = GameEvent::MoveUp_Pressed; break;

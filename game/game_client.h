@@ -26,6 +26,7 @@ class GameClient
         : m_config(config)
         , m_networkClient(networkClient)
         , m_gameSimulation(GameSimulation::Config{})
+        , m_showDebugUI(false)
         {
             assert(m_networkClient != nullptr);
         }
@@ -86,6 +87,10 @@ class GameClient
                         {
                             shouldQuit = true;
                         }
+                        else if (*appEvent == AppEvent::ToggleDebugUI)
+                        {
+                            m_showDebugUI = !m_showDebugUI;
+                        }
                     }
                     else if (auto gameEvent = std::get_if<GameEvent>(&event))
                     {
@@ -117,7 +122,8 @@ class GameClient
 
                 m_renderSystem.renderGame(m_gameSimulation,
                                           m_networkClient->getPingMs(),
-                                          m_statsManager.computeRemoteUpdateVariability());
+                                          m_statsManager.computeRemoteUpdateVariability(),
+                                          m_showDebugUI);
 
                 frameTimer.endFrame();
                 remotePlayerUpdatesThisFrame = 0; // reset count
@@ -189,6 +195,7 @@ class GameClient
         StatsManager m_statsManager;
 
         PlayerID m_localPlayerID;
+        bool m_showDebugUI;
 
         Config m_config;
 };
