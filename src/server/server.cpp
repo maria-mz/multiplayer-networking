@@ -24,7 +24,6 @@ void signalHandler(int)
 
 std::unique_ptr<GameServer> initServer(u_int16_t tcpPort,
                                        u_int16_t udpPort,
-                                       GameServer::Config gameServerConfig,
                                        asio::io_context& ioContext)
 {
     auto tcpListener = std::make_shared<TCPListener>(ioContext, tcpPort);
@@ -35,7 +34,7 @@ std::unique_ptr<GameServer> initServer(u_int16_t tcpPort,
 
     auto networkServer = std::make_shared<NetworkServer>(tcpListener, udpTransport);
 
-    auto gameServer = std::make_unique<GameServer>(gameServerConfig, networkServer);
+    auto gameServer = std::make_unique<GameServer>(networkServer);
     return gameServer;
 }
 
@@ -43,15 +42,10 @@ std::unique_ptr<GameServer> initServer(u_int16_t tcpPort,
 int main(int argc, char* argv[])
 {
     // Configuration
-    CLIOptions opts = parseArgs(argc, argv);
+    parseArgs(argc, argv);
 
     u_int16_t tcpPort = 54000;
     u_int16_t udpPort = 55000;
-
-    GameServer::Config gameServerConfig{
-        // Must match client's transport type
-        .transportForPlayerStateUpdates = opts.transport
-    };
 
     try
     {
@@ -63,7 +57,6 @@ int main(int argc, char* argv[])
 
         auto server = initServer(tcpPort,
                                 udpPort,
-                                gameServerConfig,
                                 ioContext);
 
         std::signal(SIGINT, signalHandler);

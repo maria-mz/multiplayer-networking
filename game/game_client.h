@@ -16,8 +16,6 @@ class GameClient
     public:
         struct Config
         {
-            constants::TransportType transportForPlayerStateUpdates = constants::TransportType::TCP;
-
             int assignPlayerIDTimeoutMs      = 3000;
             int assignPlayerIDPollIntervalMs = 50;
         };
@@ -121,8 +119,7 @@ class GameClient
                 m_renderSystem.renderGame(m_gameSimulation,
                                           m_networkClient->getPingMs(),
                                           m_statsManager.computeBurstinessCV(),
-                                          m_statsManager.computeRemoteMotionJitter(),
-                                          m_config.transportForPlayerStateUpdates);
+                                          m_statsManager.computeRemoteMotionJitter());
 
                 frameTimer.endFrame();
                 remotePlayerUpdatesThisFrame = 0; // reset count
@@ -166,7 +163,7 @@ class GameClient
                 if (outMsg.type == MessageType::PlayerStateUpdate)
                 {
                     m_networkClient->queueOutgoingMessage(
-                        outMsg, m_config.transportForPlayerStateUpdates
+                        outMsg, constants::TransportType::UDP
                     );
                 }
                 else

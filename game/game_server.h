@@ -14,16 +14,9 @@
 class GameServer
 {
     public:
-        struct Config
-        {
-            constants::TransportType transportForPlayerStateUpdates = constants::TransportType::TCP;
-        };
-
-    public:
-        GameServer(Config config, std::shared_ptr<NetworkServer> networkServer)
-        : m_config(config)
-        , m_networkServer(networkServer)
-        , m_gameSimulation(GameSimulation::Config{.projectileDamage = 25, .registerProjectileHits = true})
+        GameServer(std::shared_ptr<NetworkServer> networkServer)
+        : m_networkServer(networkServer)
+        , m_gameSimulation(GameSimulation::Config{ .projectileDamage = 25, .registerProjectileHits = true })
         {
             m_networkServer->setOnClientConnect([this](ClientID clientID) {
                 onClientConnected(clientID);
@@ -49,7 +42,7 @@ class GameServer
                     {
                         m_gameSimulation.applyIncomingMessage(message);
                         m_networkServer->queueBroadcast(
-                            message, m_config.transportForPlayerStateUpdates, clientID
+                            message, constants::TransportType::UDP, clientID
                         );
                     }
                     else if (message.type == MessageType::ProjectileSpawn)
@@ -141,7 +134,6 @@ class GameServer
     private:
         std::shared_ptr<NetworkServer> m_networkServer;
         GameSimulation m_gameSimulation;
-        Config m_config;
 
         uint m_nextPlayerID = 0;
         std::unordered_map<ClientID, uint> m_clientIDToPlayerID;

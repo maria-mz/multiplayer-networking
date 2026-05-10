@@ -39,7 +39,7 @@ std::unique_ptr<GameClient> initClient(asio::ip::tcp::endpoint serverTCPEndpoint
 int main(int argc, char* argv[])
 {
     // Configuration
-    CLIOptions opts = parseArgs(argc, argv);
+    parseArgs(argc, argv);
 
     std::string serverIPAddress = "127.0.0.1";
     uint16_t serverTCPPort = 54000;
@@ -53,14 +53,10 @@ int main(int argc, char* argv[])
     );
 
     NetworkClient::Config networkClientConfig{
-        .serverUDPEndpoint = serverUDPEndpoint,
-        .pingTransport = opts.transport
+        .serverUDPEndpoint = serverUDPEndpoint
     };
 
-    GameClient::Config gameClientConfig{
-        // NOTE: Must match server's transport type
-        .transportForPlayerStateUpdates = opts.transport
-    };
+    GameClient::Config gameClientConfig{};
 
     try
     {

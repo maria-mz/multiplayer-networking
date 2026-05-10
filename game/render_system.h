@@ -71,8 +71,7 @@ class RenderSystem
         void renderGame(GameSimulation& gameSimulation,
                         std::optional<float> ping,
                         double burstiness,
-                        double remoteMotionJitter,
-                        constants::TransportType transportType)
+                        double remoteMotionJitter)
         {
             assert(m_renderer != nullptr);
 
@@ -91,7 +90,7 @@ class RenderSystem
                 renderProjectile(projectile);
             }
 
-            renderHUD(gameSimulation, ping, burstiness, remoteMotionJitter, transportType);
+            renderHUD(gameSimulation, ping, burstiness, remoteMotionJitter);
 
             SDL_RenderPresent(m_renderer);
         }
@@ -259,8 +258,7 @@ class RenderSystem
         void renderHUD(GameSimulation& gameSimulation,
                        std::optional<float> ping,
                        double burstiness,
-                       double remoteMotionJitter,
-                       constants::TransportType transportType)
+                       double remoteMotionJitter)
         {
             assert(m_renderer != nullptr);
 
@@ -272,8 +270,6 @@ class RenderSystem
 
             std::string pingText = ping.has_value() ? std::format("{:.0f}", *ping) : "--";
 
-            lines.push_back(std::format("Transport: {}", transportTypeToString(transportType)));
-            lines.push_back("");
             lines.push_back(std::format("Ping: {} ms", pingText));
             lines.push_back("");
             lines.push_back(std::format("Burstiness (CV): {:.2f}", burstiness));
@@ -330,16 +326,6 @@ class RenderSystem
             }
 
             SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_NONE);
-        }
-
-        std::string transportTypeToString(constants::TransportType t)
-        {
-            switch (t)
-            {
-                case constants::TransportType::TCP:  return "TCP";
-                case constants::TransportType::UDP:  return "UDP";
-                default: return "Unknown";
-            }
         }
 
     private:
