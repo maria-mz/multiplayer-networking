@@ -70,7 +70,7 @@ class RenderSystem
 
         void renderGame(GameSimulation& gameSimulation,
                         std::optional<float> ping,
-                        double burstiness,
+                        double remoteUpdateVariability,
                         double remoteMotionJitter)
         {
             assert(m_renderer != nullptr);
@@ -90,7 +90,7 @@ class RenderSystem
                 renderProjectile(projectile);
             }
 
-            renderHUD(gameSimulation, ping, burstiness, remoteMotionJitter);
+            renderHUD(gameSimulation, ping, remoteUpdateVariability, remoteMotionJitter);
 
             SDL_RenderPresent(m_renderer);
         }
@@ -257,7 +257,7 @@ class RenderSystem
 
         void renderHUD(GameSimulation& gameSimulation,
                        std::optional<float> ping,
-                       double burstiness,
+                       double remoteUpdateVariability,
                        double remoteMotionJitter)
         {
             assert(m_renderer != nullptr);
@@ -272,7 +272,7 @@ class RenderSystem
 
             lines.push_back(std::format("Ping: {} ms", pingText));
             lines.push_back("");
-            lines.push_back(std::format("Burstiness (CV): {:.2f}", burstiness));
+            lines.push_back(std::format("Remote update variability: {:.2f}", remoteUpdateVariability));
             lines.push_back("");
             lines.push_back(std::format("Remote jitter: {:.2f} px/frame", remoteMotionJitter));
             lines.push_back("");

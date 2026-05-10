@@ -113,12 +113,12 @@ class GameClient
                 );
                 pumpSend(outgoingMessages);
 
-                m_statsManager.pushBurstinessSample(remotePlayerUpdatesThisFrame);
+                m_statsManager.pushRemoteUpdateVariabilitySample(remotePlayerUpdatesThisFrame);
                 pushRemoteMotionSamples();
 
                 m_renderSystem.renderGame(m_gameSimulation,
                                           m_networkClient->getPingMs(),
-                                          m_statsManager.computeBurstinessCV(),
+                                          m_statsManager.computeRemoteUpdateVariability(),
                                           m_statsManager.computeRemoteMotionJitter());
 
                 frameTimer.endFrame();
