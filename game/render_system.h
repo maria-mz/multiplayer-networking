@@ -70,8 +70,7 @@ class RenderSystem
 
         void renderGame(GameSimulation& gameSimulation,
                         std::optional<float> ping,
-                        double remoteUpdateVariability,
-                        double remoteMotionJitter)
+                        double remoteUpdateVariability)
         {
             assert(m_renderer != nullptr);
 
@@ -90,7 +89,7 @@ class RenderSystem
                 renderProjectile(projectile);
             }
 
-            renderHUD(gameSimulation, ping, remoteUpdateVariability, remoteMotionJitter);
+            renderHUD(gameSimulation, ping, remoteUpdateVariability);
 
             SDL_RenderPresent(m_renderer);
         }
@@ -257,8 +256,7 @@ class RenderSystem
 
         void renderHUD(GameSimulation& gameSimulation,
                        std::optional<float> ping,
-                       double remoteUpdateVariability,
-                       double remoteMotionJitter)
+                       double remoteUpdateVariability)
         {
             assert(m_renderer != nullptr);
 
@@ -273,8 +271,6 @@ class RenderSystem
             lines.push_back(std::format("Ping: {} ms", pingText));
             lines.push_back("");
             lines.push_back(std::format("Remote update variability: {:.2f}", remoteUpdateVariability));
-            lines.push_back("");
-            lines.push_back(std::format("Remote jitter: {:.2f} px/frame", remoteMotionJitter));
             lines.push_back("");
 
             for (auto& [id, player] : gameSimulation.getPlayers())

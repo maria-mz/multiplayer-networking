@@ -114,12 +114,10 @@ class GameClient
                 pumpSend(outgoingMessages);
 
                 m_statsManager.pushRemoteUpdateVariabilitySample(remotePlayerUpdatesThisFrame);
-                pushRemoteMotionSamples();
 
                 m_renderSystem.renderGame(m_gameSimulation,
                                           m_networkClient->getPingMs(),
-                                          m_statsManager.computeRemoteUpdateVariability(),
-                                          m_statsManager.computeRemoteMotionJitter());
+                                          m_statsManager.computeRemoteUpdateVariability());
 
                 frameTimer.endFrame();
                 remotePlayerUpdatesThisFrame = 0; // reset count
@@ -181,21 +179,6 @@ class GameClient
         {
             m_networkClient->pumpReceive();
             return m_networkClient->consumeIncomingMessages();
-        }
-
-        void pushRemoteMotionSamples()
-        {
-            for (const auto& [playerID, player] : m_gameSimulation.getPlayers())
-            {
-                if (playerID == m_localPlayerID)
-                {
-                    continue;
-                }
-
-                m_statsManager.pushRemoteMotionSample(
-                    playerID, player->m_position
-                );
-            }
         }
 
     private:
