@@ -50,6 +50,12 @@ class GameSimulation
             }
         }
 
+        void setPlayerIsLocal(PlayerID playerID)
+        {
+            auto& player = m_gameState.getPlayer(playerID);
+            player->isLocal = true;
+        }
+
         void applyIncomingMessage(const Message& message)
         {
             switch (message.type)

@@ -53,6 +53,7 @@ class GameClient
             }
 
             m_gameSimulation.addPlayer(m_localPlayerID);
+            m_gameSimulation.setPlayerIsLocal(m_localPlayerID);
         }
 
         bool isConnected() const
