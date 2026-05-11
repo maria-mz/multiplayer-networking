@@ -8,7 +8,7 @@
 #include <asio.hpp>
 
 #include "common/logging.h"
-#include "common/thread_safe_queue.h"
+#include "common/utils.h"
 #include "udp_message.h"
 #include "udp_transport_interface.h"
 

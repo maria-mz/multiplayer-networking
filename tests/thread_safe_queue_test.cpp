@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "common/thread_safe_queue.h"
+#include "common/utils.h"
 
 
 TEST(ThreadSafeQueueTest, BasicFIFO)

@@ -7,7 +7,7 @@
 #include <asio.hpp>
 
 #include "common/logging.h"
-#include "common/thread_safe_queue.h"
+#include "common/utils.h"
 #include "tcp_message.h"
 #include "tcp_connection_interface.h"
 

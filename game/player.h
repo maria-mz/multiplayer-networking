@@ -6,7 +6,7 @@
 #include "SDL2/SDL.h"
 
 #include "common/constants.h"
-#include "common/vector_2d.h"
+#include "common/utils.h"
 
 #include "event.h"
 
