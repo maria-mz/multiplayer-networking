@@ -2,12 +2,13 @@
 
 #include <cassert>
 #include <format>
+#include <string>
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 
 #include "common/logging.h"
-#include "ui/text.h"
+#include "text.h"
 
 #include "player.h"
 #include "font_manager.h"
@@ -19,6 +20,10 @@ class RenderSystem
     public:
         struct Config
         {
+            std::string windowTitle = "Multiplayer Networking";
+
+            std::string mainFontFile = std::string(ASSETS_DIR) + "/Inconsolata.ttf";
+
             SDL_Color backgroundColor = {255, 255, 255, 255};
             SDL_Color textColor = {0, 0, 0, 255};
 
@@ -100,13 +105,13 @@ class RenderSystem
             if (success)
             {
                 m_playerLabelAttributes.font = m_fontManager.getFont(
-                    constants::FILE_FONT_MAIN.c_str(), 16
+                    m_config.mainFontFile.c_str(), 16
                 );
                 m_playerLabelAttributes.color = m_config.textColor;
                 m_playerLabelAttributes.outlinePx = 0;
 
                 m_debugUITextAttributes.font = m_fontManager.getFont(
-                    constants::FILE_FONT_MAIN.c_str(), 16
+                    m_config.mainFontFile.c_str(), 16
                 );
                 m_debugUITextAttributes.color = m_config.textColor;
                 m_debugUITextAttributes.outlinePx = 0;
@@ -160,7 +165,7 @@ class RenderSystem
             }
             else
             {
-                m_window = SDL_CreateWindow(constants::WINDOW_TITLE,
+                m_window = SDL_CreateWindow(m_config.windowTitle.c_str(),
                                         SDL_WINDOWPOS_UNDEFINED,
                                         SDL_WINDOWPOS_UNDEFINED,
                                         constants::WINDOW_WIDTH,
@@ -215,9 +220,9 @@ class RenderSystem
             bool success = true;
 
             if (
-                !m_fontManager.loadFont(constants::FILE_FONT_MAIN.c_str(), 8) ||
-                !m_fontManager.loadFont(constants::FILE_FONT_MAIN.c_str(), 12) ||
-                !m_fontManager.loadFont(constants::FILE_FONT_MAIN.c_str(), 16)
+                !m_fontManager.loadFont(m_config.mainFontFile.c_str(), 8) ||
+                !m_fontManager.loadFont(m_config.mainFontFile.c_str(), 12) ||
+                !m_fontManager.loadFont(m_config.mainFontFile.c_str(), 16)
             )
             {
                 success = false;
