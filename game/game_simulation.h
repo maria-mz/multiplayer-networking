@@ -108,6 +108,11 @@ class GameSimulation
             return m_gameState.getPlayers();
         }
 
+        const std::unique_ptr<Player>& getPlayer(PlayerID playerID)
+        {
+            return m_gameState.getPlayer(playerID);
+        }
+
         const std::map<ProjectileID, Projectile>& getProjectiles()
         {
             return m_gameState.getProjectiles();
@@ -116,20 +121,6 @@ class GameSimulation
         bool isPlayerInGame(PlayerID playerID)
         {
             return m_gameState.isPlayerInGame(playerID);
-        }
-
-        PlayerStateUpdate makePlayerStateUpdate(PlayerID playerID)
-        {
-            auto& player = m_gameState.getPlayer(playerID);
-
-            return PlayerStateUpdate{
-                .posX = player->m_position.x,
-                .posY = player->m_position.y,
-                .velX = player->m_velocity.x,
-                .velY = player->m_velocity.y,
-                .state = player->getState(),
-                .playerID = playerID
-            };
         }
 
     private:

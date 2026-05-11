@@ -9,6 +9,7 @@
 #include "game_simulation.h"
 #include "frame_timer.h"
 #include "stats_manager.h"
+#include "message.h"
 
 
 class GameClient
@@ -111,12 +112,8 @@ class GameClient
                 m_gameSimulation.updateSimulation(frameTimer.getDeltaTime(), m_localPlayerID);
 
                 auto outgoingMessages = m_gameSimulation.collectOutgoingMessages();
-                outgoingMessages.push_back(
-                    Message{
-                        .type = MessageType::PlayerStateUpdate,
-                        .data = { .playerStateUpdate = m_gameSimulation.makePlayerStateUpdate(m_localPlayerID) }
-                    }
-                );
+                outgoingMessages.push_back(makeLocalPlayerStateUpdateMessage());
+
                 pumpSend(outgoingMessages);
 
                 m_statsManager.pushRemoteUpdateVariabilitySample(remotePlayerUpdatesThisFrame);
@@ -140,18 +137,27 @@ class GameClient
             {
                 m_networkClient->pumpReceive();
                 auto messages = m_networkClient->consumeIncomingMessages();
+                bool assignedPlayerID = false;
 
                 for (const auto& msg : messages)
                 {
                     if (msg.type == MessageType::AssignLocalPlayerID)
                     {
                         m_localPlayerID = msg.data.assignLocalPlayerID.playerID;
+                        assignedPlayerID = true;
 
                         LOG_INFO("Received player ID from server (id=%u)",
                                  m_localPlayerID);
-
-                        return true;
                     }
+                    else
+                    {
+                        m_gameSimulation.applyIncomingMessage(msg);
+                    }
+                }
+
+                if (assignedPlayerID)
+                {
+                    return true;
                 }
 
                 sleepMs(m_config.assignPlayerIDPollIntervalMs);
@@ -186,6 +192,12 @@ class GameClient
         {
             m_networkClient->pumpReceive();
             return m_networkClient->consumeIncomingMessages();
+        }
+
+        Message makeLocalPlayerStateUpdateMessage()
+        {
+            const auto& localPlayer = m_gameSimulation.getPlayer(m_localPlayerID);
+            return makePlayerStateUpdateMessage(m_localPlayerID, *localPlayer);
         }
 
     private:

@@ -132,3 +132,69 @@ inline UDPMessage toUDPMessage(const Message& message)
 {
     return UDPMessage{message};
 }
+
+inline Message makeAssignLocalPlayerIDMessage(PlayerID playerID)
+{
+    return Message{
+        MessageType::AssignLocalPlayerID,
+        {
+            .assignLocalPlayerID = {
+                playerID
+            }
+        }
+    };
+}
+
+inline Message makePlayerJoinedMessage(PlayerID playerID)
+{
+    return Message{
+        MessageType::PlayerJoined,
+        {
+            .playerJoined = {
+                playerID
+            }
+        }
+    };
+}
+
+inline Message makePlayerLeftMessage(PlayerID playerID)
+{
+    return Message{
+        MessageType::PlayerLeft,
+        {
+            .playerLeft = {
+                playerID
+            }
+        }
+    };
+}
+
+inline Message makePlayerStateUpdateMessage(PlayerID playerID, const Player& player)
+{
+    return Message{
+        MessageType::PlayerStateUpdate,
+        {
+            .playerStateUpdate = {
+                .posX = player.m_position.x,
+                .posY = player.m_position.y,
+                .velX = player.m_velocity.x,
+                .velY = player.m_velocity.y,
+                .state = player.getState(),
+                .playerID = playerID
+            }
+        }
+    };
+}
+
+inline Message makePlayerHealthUpdateMessage(PlayerID playerID, int health)
+{
+    return Message{
+        MessageType::PlayerHealthUpdate,
+        {
+            .playerHealthUpdate = {
+                .playerID = playerID,
+                .health = health
+            }
+        }
+    };
+}

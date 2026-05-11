@@ -10,6 +10,7 @@
 
 #include "game_simulation.h"
 #include "network_server.h"
+#include "message.h"
 
 class GameServer
 {
@@ -74,32 +75,34 @@ class GameServer
         {
             uint playerID = getNextPlayerID();
 
-            Message assignPlayerID{
-                MessageType::AssignLocalPlayerID,
-                {
-                    .assignLocalPlayerID = {
-                        playerID
-                    }
-                }
-            };
+            m_networkServer->queueOutgoingMessage(
+                connectedClientID,
+                makeAssignLocalPlayerIDMessage(playerID),
+                constants::TransportType::TCP
+            );
 
-            Message playerJoined{
-                MessageType::PlayerJoined,
-                {
-                    .playerJoined = {
-                        playerID
-                    }
-                }
-            };
+            for (const auto& [playerID, player] : m_gameSimulation.getPlayers())
+            {
+                m_networkServer->queueOutgoingMessage(
+                    connectedClientID,
+                    makePlayerStateUpdateMessage(playerID, *player),
+                    constants::TransportType::TCP
+                );
+
+                m_networkServer->queueOutgoingMessage(
+                    connectedClientID,
+                    makePlayerHealthUpdateMessage(playerID, player->getHealth()),
+                    constants::TransportType::TCP
+                );
+            }
 
             m_clientIDToPlayerID[connectedClientID] = playerID;
             m_gameSimulation.addPlayer(playerID);
 
-            m_networkServer->queueOutgoingMessage(
-                connectedClientID, assignPlayerID, constants::TransportType::TCP
-            );
             m_networkServer->queueBroadcast(
-                assignPlayerID, constants::TransportType::TCP, connectedClientID
+                makePlayerJoinedMessage(playerID),
+                constants::TransportType::TCP,
+                connectedClientID
             );
         };
 
@@ -115,17 +118,10 @@ class GameServer
             m_gameSimulation.removePlayer(playerID);
             m_clientIDToPlayerID.erase(it);
 
-            Message playerLeftMsg{
-                MessageType::PlayerLeft,
-                {
-                    .playerLeft = {
-                        playerID
-                    }
-                }
-            };
-
             m_networkServer->queueBroadcast(
-                playerLeftMsg, constants::TransportType::TCP, disconnectedClientID
+                makePlayerLeftMessage(playerID),
+                constants::TransportType::TCP,
+                disconnectedClientID
             );
         };
 
