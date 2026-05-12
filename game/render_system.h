@@ -20,7 +20,7 @@ class RenderSystem
     public:
         struct Config
         {
-            std::string windowTitle = "Multiplayer Networking";
+            std::string windowTitle = "Pixelators";
 
             std::string mainFontFile = std::string(ASSETS_DIR) + "/Inconsolata.ttf";
 
@@ -135,10 +135,7 @@ class RenderSystem
                 renderGrid();
             }
 
-            for (auto& [id, player] : gameSimulation.getPlayers())
-            {
-                renderPlayer(*player, id);
-            }
+            renderPlayers(gameSimulation);
 
             for (const auto& [id, projectile] : gameSimulation.getProjectiles())
             {
@@ -234,6 +231,29 @@ class RenderSystem
         void setRenderColor(const SDL_Color& color)
         {
             SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, color.a);
+        }
+
+        void renderPlayers(GameSimulation& gameSimulation)
+        {
+            std::optional<PlayerID> localPlayerID = std::nullopt;
+
+            for (auto& [id, player] : gameSimulation.getPlayers())
+            {
+                if (!player->isLocal)
+                {
+                    renderPlayer(*player, id);
+                }
+                else {
+                    localPlayerID = id;
+                }
+            }
+
+            // Render local player last so it is always easily visible
+            if (localPlayerID)
+            {
+                auto& localPlayer = gameSimulation.getPlayer(*localPlayerID);
+                renderPlayer(*localPlayer, *localPlayerID);
+            }
         }
 
         void renderPlayer(Player& player, PlayerID playerID)
